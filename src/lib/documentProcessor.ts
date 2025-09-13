@@ -73,7 +73,7 @@ async function performClaudeVisionAnalysis(buffer: Buffer): Promise<{
     });
     
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022', // Latest Claude Sonnet model with vision
+      model: 'claude-sonnet-4-20250514', // Claude Sonnet 4 model for document parsing
       max_tokens: 1000,
       temperature: 0,
       messages: [
@@ -161,7 +161,7 @@ async function performClaudeTextAnalysis(text: string): Promise<{
     });
     
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514', // Claude Sonnet 4 model for document parsing
       max_tokens: 1000,
       temperature: 0,
       messages: [

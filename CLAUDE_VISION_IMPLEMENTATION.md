@@ -1,6 +1,6 @@
 # 🎯 **Claude Vision Implementation - Direct Document Analysis**
 
-## 🚀 **Complete OCR Replacement with Claude Sonnet 4**
+## 🚀 **Complete OCR Replacement with Claude Sonnet 4 (claude-sonnet-4-20250514)**
 
 ### ❌ **Old Approach: OCR + Pattern Matching**
 ```
@@ -27,7 +27,7 @@ Image → Claude Sonnet 4 Vision → Structured JSON Data
 ```javascript
 async function performClaudeVisionAnalysis(buffer: Buffer): Promise<BillData | null> {
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022', // Latest Claude Sonnet with vision
+    model: 'claude-sonnet-4-20250514', // Claude Sonnet 4 model for document parsing
     messages: [{
       role: 'user',
       content: [
@@ -56,7 +56,7 @@ async function performClaudeVisionAnalysis(buffer: Buffer): Promise<BillData | n
 ```javascript
 async function performClaudeTextAnalysis(text: string): Promise<BillData> {
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-20250514', // Claude Sonnet 4 model for document parsing
     messages: [{
       role: 'user',
       content: `Analyze this bill/document text and extract information.
