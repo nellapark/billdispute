@@ -5,7 +5,11 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { DisputeFormData } from '@/types';
 
-export default function DisputeUpload() {
+interface DisputeUploadProps {
+  onUploadSuccess?: (disputeId: string) => void;
+}
+
+export default function DisputeUpload({ onUploadSuccess }: DisputeUploadProps) {
   const [formData, setFormData] = useState<DisputeFormData>({
     file: null,
     description: '',
@@ -66,7 +70,7 @@ export default function DisputeUpload() {
         throw new Error('Failed to upload dispute');
       }
 
-      await response.json();
+      const result = await response.json();
       setSuccess('Dispute uploaded successfully! Processing will begin shortly.');
       
       // Reset form
@@ -75,6 +79,13 @@ export default function DisputeUpload() {
         description: '',
         priority: 'medium'
       });
+
+      // Trigger the dashboard flow
+      if (onUploadSuccess && result.disputeId) {
+        setTimeout(() => {
+          onUploadSuccess(result.disputeId);
+        }, 1000); // Brief delay to show success message
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

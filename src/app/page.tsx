@@ -6,11 +6,42 @@ import { mockBillDisputes } from '@/data/mockData';
 import DisputeDashboard from '@/components/DisputeDashboard';
 import DisputeUpload from '@/components/DisputeUpload';
 import DisputeDetail from '@/components/DisputeDetail';
+import LoadingDashboard from '@/components/LoadingDashboard';
+import StreamingDashboard from '@/components/StreamingDashboard';
+
+type ViewState = 'upload' | 'loading' | 'streaming' | 'detail';
 
 export default function Home() {
   const [selectedDispute, setSelectedDispute] = useState<BillDispute | null>(null);
   const [disputes] = useState<BillDispute[]>(mockBillDisputes);
+  const [currentView, setCurrentView] = useState<ViewState>('upload');
+  const [currentDisputeId, setCurrentDisputeId] = useState<string | null>(null);
 
+  const handleUploadSuccess = (disputeId: string) => {
+    setCurrentDisputeId(disputeId);
+    setCurrentView('loading');
+  };
+
+  const handleLoadingComplete = () => {
+    setCurrentView('streaming');
+  };
+
+  const handleBackToUpload = () => {
+    setCurrentView('upload');
+    setSelectedDispute(null);
+    setCurrentDisputeId(null);
+  };
+
+  // Full-screen views
+  if (currentView === 'loading') {
+    return <LoadingDashboard onComplete={handleLoadingComplete} />;
+  }
+
+  if (currentView === 'streaming') {
+    return <StreamingDashboard disputeId={currentDisputeId || undefined} />;
+  }
+
+  // Original layout for upload and detail views
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -43,7 +74,7 @@ export default function Home() {
                 onBack={() => setSelectedDispute(null)}
               />
             ) : (
-              <DisputeUpload />
+              <DisputeUpload onUploadSuccess={handleUploadSuccess} />
             )}
           </div>
         </div>
