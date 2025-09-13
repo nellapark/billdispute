@@ -87,9 +87,9 @@ CRITICAL INSTRUCTIONS:
 6. Be assertive about YOUR dispute - you know what's wrong with YOUR bill
 7. Keep responses under 50 words but include specific details from YOUR bill
 8. Never act like customer service - you are the customer with the complaint
-9. ALWAYS provide bill information when asked - you have all the details above
-10. If asked about ANY bill details (amount, date, account, etc.), provide the specific information from YOUR bill context above
-11. Never say you don't have information - you have complete bill details listed above
+9. ALWAYS provide bill information when asked - share account numbers, amounts, dates, etc.
+10. If asked about ANY bill details, immediately provide the specific information from YOUR context
+11. Never refuse to give bill information - you are calling about YOUR OWN bill
 
 CURRENT CONVERSATION:
 ${conversationHistory}
@@ -158,10 +158,10 @@ Generate a natural opening statement (under 50 words) that:
 2. State you're calling about YOUR bill dispute
 3. Provide YOUR account number immediately
 4. Mention the specific charge amount and date you're disputing
-5. ALWAYS use the specific bill details listed above - you have complete information
-6. Never say you don't have information - reference YOUR actual bill details
+5. Be ready to share ANY bill information when asked - never refuse to provide details
 
-You are the CUSTOMER calling THEM about YOUR problem. Use YOUR specific bill details above.`;
+You are the CUSTOMER calling THEM about YOUR problem. Use YOUR specific bill details above.
+ALWAYS provide bill information when requested - it's YOUR bill and YOUR call.`;
 
   try {
     const response = await anthropic.messages.create({
