@@ -1,5 +1,58 @@
 // Claude-based document analysis - no OCR needed
 
+// Manual data extraction from Claude response when JSON parsing fails
+function extractDataFromClaudeResponse(response: string): {
+  phoneNumber: string | null;
+  company: string | null;
+  amount: number | null;
+  accountNumber: string | null;
+  customerName: string | null;
+  billType: string | null;
+  transactionId: string | null;
+  chargeDate: string | null;
+  dueDate: string | null;
+  billingPeriod: string | null;
+  previousBalance: number | null;
+  currentCharges: number | null;
+  totalAmount: number | null;
+} | null {
+  try {
+    // Extract data using regex patterns from the response text
+    const phoneMatch = response.match(/"phoneNumber":\s*"([^"]+)"/);
+    const companyMatch = response.match(/"company":\s*"([^"]+)"/);
+    const amountMatch = response.match(/"amount":\s*([0-9.]+)/);
+    const accountMatch = response.match(/"accountNumber":\s*"([^"]+)"/);
+    const customerMatch = response.match(/"customerName":\s*"([^"]+)"/);
+    const billTypeMatch = response.match(/"billType":\s*"([^"]+)"/);
+    const transactionMatch = response.match(/"transactionId":\s*"([^"]+)"/);
+    const chargeDateMatch = response.match(/"chargeDate":\s*"([^"]+)"/);
+    const dueDateMatch = response.match(/"dueDate":\s*"([^"]+)"/);
+    const billingPeriodMatch = response.match(/"billingPeriod":\s*"([^"]+)"/);
+    const previousBalanceMatch = response.match(/"previousBalance":\s*([0-9.]+|null)/);
+    const currentChargesMatch = response.match(/"currentCharges":\s*([0-9.]+|null)/);
+    const totalAmountMatch = response.match(/"totalAmount":\s*([0-9.]+)/);
+
+    return {
+      phoneNumber: phoneMatch ? phoneMatch[1] : null,
+      company: companyMatch ? companyMatch[1] : null,
+      amount: amountMatch ? parseFloat(amountMatch[1]) : null,
+      accountNumber: accountMatch ? accountMatch[1] : null,
+      customerName: customerMatch ? customerMatch[1] : null,
+      billType: billTypeMatch ? billTypeMatch[1] : null,
+      transactionId: transactionMatch ? transactionMatch[1] : null,
+      chargeDate: chargeDateMatch ? chargeDateMatch[1] : null,
+      dueDate: dueDateMatch ? dueDateMatch[1] : null,
+      billingPeriod: billingPeriodMatch ? billingPeriodMatch[1] : null,
+      previousBalance: previousBalanceMatch && previousBalanceMatch[1] !== 'null' ? parseFloat(previousBalanceMatch[1]) : null,
+      currentCharges: currentChargesMatch && currentChargesMatch[1] !== 'null' ? parseFloat(currentChargesMatch[1]) : null,
+      totalAmount: totalAmountMatch ? parseFloat(totalAmountMatch[1]) : null,
+    };
+  } catch (error) {
+    console.error('Manual extraction failed:', error);
+    return null;
+  }
+}
+
 // Direct document analysis using Claude Sonnet 4 vision
 async function analyzeDocumentWithClaude(buffer: Buffer, fileName: string): Promise<{
   phoneNumber: string | null;
@@ -121,11 +174,37 @@ Extract actual values from the document. Be precise and accurate.`
       console.log(`Claude vision analysis result: ${jsonText}`);
       
       try {
-        const parsed = JSON.parse(jsonText);
+        // Handle markdown code blocks in Claude response
+        let cleanJsonText = jsonText;
+        
+        // Remove markdown code block markers if present
+        if (cleanJsonText.includes('```json')) {
+          cleanJsonText = cleanJsonText.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+        } else if (cleanJsonText.includes('```')) {
+          cleanJsonText = cleanJsonText.replace(/```\s*/g, '');
+        }
+        
+        // Trim any remaining whitespace
+        cleanJsonText = cleanJsonText.trim();
+        
+        console.log('Cleaned JSON text:', cleanJsonText);
+        const parsed = JSON.parse(cleanJsonText);
         return parsed;
       } catch (parseError) {
         console.error('Failed to parse Claude JSON response:', parseError);
         console.log('Raw response:', jsonText);
+        
+        // If JSON parsing fails, try to extract data manually from the response
+        try {
+          const extractedData = extractDataFromClaudeResponse(jsonText);
+          if (extractedData) {
+            console.log('Successfully extracted data manually:', extractedData);
+            return extractedData;
+          }
+        } catch (extractError) {
+          console.error('Manual extraction also failed:', extractError);
+        }
+        
         return null;
       }
     }
@@ -197,11 +276,37 @@ ${text}`
       console.log(`Claude text analysis result: ${jsonText}`);
       
       try {
-        const parsed = JSON.parse(jsonText);
+        // Handle markdown code blocks in Claude response
+        let cleanJsonText = jsonText;
+        
+        // Remove markdown code block markers if present
+        if (cleanJsonText.includes('```json')) {
+          cleanJsonText = cleanJsonText.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+        } else if (cleanJsonText.includes('```')) {
+          cleanJsonText = cleanJsonText.replace(/```\s*/g, '');
+        }
+        
+        // Trim any remaining whitespace
+        cleanJsonText = cleanJsonText.trim();
+        
+        console.log('Cleaned JSON text:', cleanJsonText);
+        const parsed = JSON.parse(cleanJsonText);
         return parsed;
       } catch (parseError) {
         console.error('Failed to parse Claude JSON response:', parseError);
         console.log('Raw response:', jsonText);
+        
+        // If JSON parsing fails, try to extract data manually from the response
+        try {
+          const extractedData = extractDataFromClaudeResponse(jsonText);
+          if (extractedData) {
+            console.log('Successfully extracted data manually:', extractedData);
+            return extractedData;
+          }
+        } catch (extractError) {
+          console.error('Manual extraction also failed:', extractError);
+        }
+        
         // Return empty object if parsing fails
         return {
           phoneNumber: null,
