@@ -177,7 +177,7 @@ export async function generateVoiceResponse(
   try {
     const audio = await elevenLabs.textToSpeech.convert(voiceId, {
       text,
-      modelId: 'eleven_turbo_v2_5', // Fastest model for ultra-low latency
+      modelId: 'eleven_flash_v2_5', // Flash model for ultra-low latency (~75ms)
       voiceSettings: {
         stability: 0.3, // Lower for maximum speed
         similarityBoost: 0.3, // Lower for maximum speed
