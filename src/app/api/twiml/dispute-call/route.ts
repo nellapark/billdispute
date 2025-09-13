@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
     const greetingAudioUrl = createAudioUrl(greeting, 'f5HLTX707KIM4SzJYzSz');
     const retryAudioUrl = createAudioUrl("I didn't receive a response. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Create TwiML response that goes straight into conversation with ElevenLabs voice
+    // Create TwiML response with interrupt capability for initial greeting
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
+  <Gather input="speech" timeout="10" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
     <Play>${escapeXmlUrl(greetingAudioUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryAudioUrl)}</Play>

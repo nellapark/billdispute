@@ -45,11 +45,11 @@ export async function POST(request: NextRequest) {
       const continueUrl = createAudioUrl('Please continue.', 'f5HLTX707KIM4SzJYzSz');
       const transferUrl = createAudioUrl("I'm having trouble hearing you. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
 
-      // No speech detected, ask again with ElevenLabs voice
+      // No speech detected, ask again with ElevenLabs voice and interrupt capability
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Play>${escapeXmlUrl(noSpeechUrl)}</Play>
-  <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
+  <Gather input="speech" timeout="10" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
+    <Play>${escapeXmlUrl(noSpeechUrl)}</Play>
     <Play>${escapeXmlUrl(continueUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(transferUrl)}</Play>

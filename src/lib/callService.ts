@@ -187,11 +187,11 @@ export async function processCallInput(
     const continuePromptUrl = createAudioUrl('Please continue.', 'f5HLTX707KIM4SzJYzSz');
     const retryPromptUrl = createAudioUrl("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Use ElevenLabs audio with <Play> verb instead of <Say>
+    // Use ElevenLabs audio with interrupt capability (bargein)
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
-  <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
+  <Gather input="speech" timeout="10" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
+    <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
     <Play>${escapeXmlUrl(continuePromptUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryPromptUrl)}</Play>
