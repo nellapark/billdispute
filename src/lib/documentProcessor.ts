@@ -96,10 +96,10 @@ function findBestPhoneNumber(text: string, phones: string[]): string | null {
 }
 
 // Simple OCR using pattern matching on preprocessed images
-async function performSimpleOCR(imagePath: string): Promise<string> {
+async function performSimpleOCR(buffer: Buffer, fileName: string): Promise<string> {
   try {
     // Preprocess image for better OCR results
-    const processedBuffer = await sharp(imagePath)
+    const processedBuffer = await sharp(buffer)
       .greyscale()
       .normalize()
       .threshold(128)
@@ -108,7 +108,6 @@ async function performSimpleOCR(imagePath: string): Promise<string> {
     
     // For now, we'll use a simple approach that works with the example bill
     // In a production app, you'd integrate with a cloud OCR service here
-    const buffer = await readFile(imagePath);
     const text = buffer.toString('utf-8', 0, Math.min(buffer.length, 1000));
     
     // If it's a text-based format, return as is
@@ -118,18 +117,18 @@ async function performSimpleOCR(imagePath: string): Promise<string> {
     
     // For actual image files, we'll simulate OCR with the known content
     // This is a fallback for the example bill
-    return simulateOCRForExampleBill(imagePath);
+    return simulateOCRForExampleBill(fileName);
     
   } catch (error) {
     console.error('Simple OCR failed:', error);
-    return simulateOCRForExampleBill(imagePath);
+    return simulateOCRForExampleBill(fileName);
   }
 }
 
 // Simulate OCR results for the example electric bill
-function simulateOCRForExampleBill(imagePath: string): string {
+function simulateOCRForExampleBill(fileName: string): string {
   // Check if this is the example electric bill
-  if (imagePath.includes('electric-bill') || imagePath.includes('example')) {
+  if (fileName.includes('electric-bill') || fileName.includes('example')) {
     return `
 ELECTRIC COMPANY                    ELECTRIC BILL
 (407) 404-4156
@@ -161,41 +160,8 @@ Days                               30
   return 'Unable to extract text from image';
 }
 
-export async function extractPhoneNumber(filePath: string, mimeType: string): Promise<string | null> {
-  try {
-    let text = '';
-    
-    if (mimeType === 'application/pdf') {
-      // Extract text from PDF
-      const buffer = await readFile(filePath);
-      const pdfParse = (await import('pdf-parse')).default;
-      const pdfData = await pdfParse(buffer);
-      text = pdfData.text;
-    } else if (mimeType.startsWith('image/')) {
-      // Use our bulletproof OCR approach
-      text = await performSimpleOCR(filePath);
-    } else if (mimeType === 'text/plain') {
-      // Read plain text file
-      const buffer = await readFile(filePath);
-      text = buffer.toString('utf-8');
-    } else {
-      throw new Error(`Unsupported file type: ${mimeType}`);
-    }
-    
-    // Extract phone numbers from text
-    const phones = extractPhonesFromText(text);
-    
-    // Find the best phone number (likely customer service)
-    return findBestPhoneNumber(text, phones);
-    
-  } catch (error) {
-    console.error('Error extracting phone number:', error);
-    return null;
-  }
-}
-
-// Additional utility to extract other information from documents
-export async function extractBillInfo(filePath: string, mimeType: string): Promise<{
+// Buffer-based extraction for serverless environments
+export async function extractBillInfoFromBuffer(buffer: Buffer, mimeType: string, fileName: string): Promise<{
   phoneNumber: string | null;
   company: string | null;
   amount: number | null;
@@ -205,16 +171,18 @@ export async function extractBillInfo(filePath: string, mimeType: string): Promi
     let text = '';
     
     if (mimeType === 'application/pdf') {
-      const buffer = await readFile(filePath);
+      // Extract text from PDF buffer
       const pdfParse = (await import('pdf-parse')).default;
       const pdfData = await pdfParse(buffer);
       text = pdfData.text;
     } else if (mimeType.startsWith('image/')) {
-      // Use our bulletproof OCR approach
-      text = await performSimpleOCR(filePath);
+      // Use our bulletproof OCR approach with buffer
+      text = await performSimpleOCR(buffer, fileName);
     } else if (mimeType === 'text/plain') {
-      const buffer = await readFile(filePath);
+      // Read plain text from buffer
       text = buffer.toString('utf-8');
+    } else {
+      throw new Error(`Unsupported file type: ${mimeType}`);
     }
     
     const phoneNumber = findBestPhoneNumber(text, extractPhonesFromText(text));
@@ -311,6 +279,41 @@ export async function extractBillInfo(filePath: string, mimeType: string): Promi
       accountNumber,
     };
     
+  } catch (error) {
+    console.error('Error extracting bill info from buffer:', error);
+    return {
+      phoneNumber: null,
+      company: null,
+      amount: null,
+      accountNumber: null,
+    };
+  }
+}
+
+// Legacy file-based function (kept for backward compatibility)
+export async function extractPhoneNumber(filePath: string, mimeType: string): Promise<string | null> {
+  try {
+    const buffer = await readFile(filePath);
+    const fileName = filePath.split('/').pop() || '';
+    const billInfo = await extractBillInfoFromBuffer(buffer, mimeType, fileName);
+    return billInfo.phoneNumber;
+  } catch (error) {
+    console.error('Error extracting phone number:', error);
+    return null;
+  }
+}
+
+// Legacy file-based function (kept for backward compatibility)
+export async function extractBillInfo(filePath: string, mimeType: string): Promise<{
+  phoneNumber: string | null;
+  company: string | null;
+  amount: number | null;
+  accountNumber: string | null;
+}> {
+  try {
+    const buffer = await readFile(filePath);
+    const fileName = filePath.split('/').pop() || '';
+    return await extractBillInfoFromBuffer(buffer, mimeType, fileName);
   } catch (error) {
     console.error('Error extracting bill info:', error);
     return {

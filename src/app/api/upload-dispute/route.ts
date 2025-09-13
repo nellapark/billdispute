@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { extractBillInfo } from '@/lib/documentProcessor';
+import { extractBillInfoFromBuffer } from '@/lib/documentProcessor';
 import { initiateDisputeCall } from '@/lib/callService';
 
 export async function POST(request: NextRequest) {
@@ -19,23 +17,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Description is required' }, { status: 400 });
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads');
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist
-    }
-
-    // Save the file
+    // Process the file in memory (serverless-friendly)
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const filename = `${Date.now()}-${file.name}`;
-    const filepath = join(uploadsDir, filename);
-    
-    await writeFile(filepath, buffer);
 
-    // Extract bill information from document
+    // Extract bill information from document buffer
     let billInfo = {
       phoneNumber: null as string | null,
       company: null as string | null,
@@ -44,7 +30,7 @@ export async function POST(request: NextRequest) {
     };
     
     try {
-      billInfo = await extractBillInfo(filepath, file.type);
+      billInfo = await extractBillInfoFromBuffer(buffer, file.type, file.name);
       console.log('Extracted bill info:', billInfo);
     } catch (error) {
       console.error('Error extracting bill info:', error);
@@ -62,7 +48,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       updatedAt: new Date(),
       description,
-      documentUrl: `/uploads/${filename}`,
+      documentUrl: `data:${file.type};base64,${buffer.toString('base64').substring(0, 100)}...`, // Truncated for storage
       calls: [],
       priority: priority as 'low' | 'medium' | 'high'
     };
