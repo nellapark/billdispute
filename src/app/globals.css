@@ -24,3 +24,35 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure form elements have proper text color visibility */
+input, textarea, select {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important; /* text-gray-500 */
+}
+
+/* Ensure select options are visible */
+select option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  input, textarea, select {
+    color: #f9fafb !important; /* text-gray-50 */
+    background-color: #374151 !important; /* bg-gray-700 */
+  }
+  
+  input::placeholder, textarea::placeholder {
+    color: #9ca3af !important; /* text-gray-400 */
+  }
+  
+  select option {
+    color: #f9fafb !important;
+    background-color: #374151 !important;
+  }
+}

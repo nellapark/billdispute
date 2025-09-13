@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { extractPhoneNumber } from '@/lib/documentProcessor';
+import { extractBillInfo } from '@/lib/documentProcessor';
 import { initiateDisputeCall } from '@/lib/callService';
 
 export async function POST(request: NextRequest) {
@@ -35,22 +35,29 @@ export async function POST(request: NextRequest) {
     
     await writeFile(filepath, buffer);
 
-    // Extract phone number from document
-    let phoneNumber: string | null = null;
+    // Extract bill information from document
+    let billInfo = {
+      phoneNumber: null as string | null,
+      company: null as string | null,
+      amount: null as number | null,
+      accountNumber: null as string | null,
+    };
+    
     try {
-      phoneNumber = await extractPhoneNumber(filepath, file.type);
+      billInfo = await extractBillInfo(filepath, file.type);
+      console.log('Extracted bill info:', billInfo);
     } catch (error) {
-      console.error('Error extracting phone number:', error);
+      console.error('Error extracting bill info:', error);
     }
 
     // Create dispute record (in a real app, this would be saved to database)
     const disputeId = `dispute-${Date.now()}`;
     const dispute = {
       id: disputeId,
-      title: `Dispute for ${file.name}`,
-      company: 'Unknown', // Would be extracted from document
-      amount: 0, // Would be extracted from document
-      phoneNumber: phoneNumber || undefined,
+      title: `${billInfo.company || 'Bill'} Dispute - $${billInfo.amount || 'Unknown Amount'}`,
+      company: billInfo.company || 'Unknown',
+      amount: billInfo.amount || 0,
+      phoneNumber: billInfo.phoneNumber || undefined,
       status: 'pending' as const,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -61,8 +68,9 @@ export async function POST(request: NextRequest) {
     };
 
     // If we have a phone number, initiate the dispute call
-    if (phoneNumber) {
+    if (billInfo.phoneNumber) {
       try {
+        console.log(`Initiating dispute call to ${billInfo.phoneNumber} for ${billInfo.company}`);
         await initiateDisputeCall(dispute);
       } catch (error) {
         console.error('Error initiating dispute call:', error);
@@ -72,11 +80,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      disputeId,
-      phoneNumber,
-      message: phoneNumber 
-        ? 'Dispute uploaded successfully. Phone number extracted and call initiated.'
-        : 'Dispute uploaded successfully. Could not extract phone number - manual entry required.'
+      dispute: {
+        id: disputeId,
+        company: billInfo.company,
+        amount: billInfo.amount,
+        phoneNumber: billInfo.phoneNumber,
+        accountNumber: billInfo.accountNumber,
+        description,
+        priority,
+        callInitiated: !!billInfo.phoneNumber
+      },
+      message: billInfo.phoneNumber 
+        ? `Dispute created successfully! Found ${billInfo.company || 'company'} bill for $${billInfo.amount || 'unknown amount'}. Call initiated to ${billInfo.phoneNumber}.`
+        : `Dispute created successfully! Found ${billInfo.company || 'company'} bill for $${billInfo.amount || 'unknown amount'}. No phone number found - manual entry required.`
     });
 
   } catch (error) {

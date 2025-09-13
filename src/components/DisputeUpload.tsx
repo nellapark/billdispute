@@ -160,7 +160,7 @@ export default function DisputeUpload() {
             rows={4}
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
             placeholder="Describe the issue with your bill. Be specific about what charges you're disputing and why..."
           />
         </div>
@@ -174,7 +174,7 @@ export default function DisputeUpload() {
             id="priority"
             value={formData.priority}
             onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
           >
             <option value="low">Low - Minor issue, not urgent</option>
             <option value="medium">Medium - Standard dispute</option>

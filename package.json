@@ -11,6 +11,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.62.0",
     "@elevenlabs/elevenlabs-js": "^2.15.0",
+    "@google-cloud/vision": "^5.3.3",
     "@types/multer": "^2.0.0",
     "dotenv": "^17.2.2",
     "lucide-react": "^0.544.0",
@@ -20,7 +21,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-dropzone": "^14.3.8",
-    "tesseract.js": "^6.0.1",
+    "sharp": "^0.34.3",
     "twilio": "^5.9.0"
   },
   "devDependencies": {
