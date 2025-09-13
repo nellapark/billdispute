@@ -256,7 +256,7 @@ export async function processCallInput(
     
     const [mainAudioBuffer, retryAudioBuffer] = await Promise.all([
       generateVoiceResponse(aiResponse, 'f5HLTX707KIM4SzJYzSz'),
-      generateVoiceResponse("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz')
+      generateVoiceResponse("I didn't hear anything.", 'f5HLTX707KIM4SzJYzSz')
     ]);
     
     const audioTime = Date.now() - audioStartTime;
@@ -264,13 +264,13 @@ export async function processCallInput(
 
     // Create URLs for the pre-generated audio
     const mainResponseUrl = createAudioUrl(aiResponse, 'f5HLTX707KIM4SzJYzSz');
-    const retryPromptUrl = createAudioUrl("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
+    const retryPromptUrl = createAudioUrl("I didn't hear anything.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Use optimized speech detection settings for faster response
+    // Use balanced settings: fast speech detection but reasonable timeout for thinking
     const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="2" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
+  <Gather input="speech" timeout="5" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryPromptUrl)}</Play>

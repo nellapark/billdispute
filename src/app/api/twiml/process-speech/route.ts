@@ -45,11 +45,11 @@ export async function POST(request: NextRequest) {
       const noSpeechUrl = createAudioUrl("I didn't hear anything. Could you please repeat that?", 'f5HLTX707KIM4SzJYzSz');
       const transferUrl = createAudioUrl("I'm having trouble hearing you. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
 
-      // No speech detected, ask again with faster response detection
+      // No speech detected, ask again with reasonable timeout for user thinking
       const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="2" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
+  <Gather input="speech" timeout="5" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(noSpeechUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(transferUrl)}</Play>

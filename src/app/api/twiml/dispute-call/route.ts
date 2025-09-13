@@ -113,13 +113,13 @@ export async function POST(request: NextRequest) {
 
     // Generate ElevenLabs audio URLs
     const greetingAudioUrl = createAudioUrl(greeting, 'f5HLTX707KIM4SzJYzSz');
-    const retryAudioUrl = createAudioUrl("I didn't receive a response. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
+    const retryAudioUrl = createAudioUrl("I didn't receive a response.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Create TwiML response with ultra-fast response detection
+    // Create TwiML response with reasonable timeout for user thinking time
     const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="2" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
+  <Gather input="speech" timeout="6" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(greetingAudioUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryAudioUrl)}</Play>
