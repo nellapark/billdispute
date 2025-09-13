@@ -3,6 +3,11 @@ import { endCall } from '@/lib/callService';
 
 export async function POST(request: NextRequest) {
   try {
+    // Log request details for debugging
+    const userAgent = request.headers.get('user-agent') || '';
+    const origin = request.headers.get('origin') || '';
+    console.log(`Webhook called by: ${userAgent}, Origin: ${origin}`);
+    
     const formData = await request.formData();
     const callSid = formData.get('CallSid') as string;
     const callStatus = formData.get('CallStatus') as string;
