@@ -43,16 +43,14 @@ export async function POST(request: NextRequest) {
 
       // Generate ElevenLabs audio URLs for no speech scenario
       const noSpeechUrl = createAudioUrl("I didn't hear anything. Could you please repeat that?", 'f5HLTX707KIM4SzJYzSz');
-      const continueUrl = createAudioUrl('Please continue.', 'f5HLTX707KIM4SzJYzSz');
       const transferUrl = createAudioUrl("I'm having trouble hearing you. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
 
-      // No speech detected, ask again with fast response times
+      // No speech detected, ask again with natural response
       const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(noSpeechUrl)}</Play>
-    <Play>${escapeXmlUrl(continueUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(transferUrl)}</Play>
   <Hangup/>

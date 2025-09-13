@@ -243,16 +243,14 @@ export async function processCallInput(
 
     // Generate ElevenLabs audio URLs
     const mainResponseUrl = createAudioUrl(aiResponse, 'f5HLTX707KIM4SzJYzSz');
-    const continuePromptUrl = createAudioUrl('Please continue.', 'f5HLTX707KIM4SzJYzSz');
     const retryPromptUrl = createAudioUrl("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Use ElevenLabs audio with fast response (optimized timeouts)
+    // Use ElevenLabs audio with natural AI response (no hardcoded prompts)
     const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
-    <Play>${escapeXmlUrl(continuePromptUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryPromptUrl)}</Play>
   <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${session.disputeId}${dataParam}</Redirect>

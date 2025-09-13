@@ -90,11 +90,14 @@ CRITICAL INSTRUCTIONS:
 9. ALWAYS provide bill information when asked - share account numbers, amounts, dates, etc.
 10. If asked about ANY bill details, immediately provide the specific information from YOUR context
 11. Never refuse to give bill information - you are calling about YOUR OWN bill
+12. End responses naturally - don't always ask questions or say "please continue"
+13. Vary your response style: sometimes make statements, sometimes ask questions, sometimes express frustration
+14. Sound like a real person having a conversation, not a scripted response
 
 CURRENT CONVERSATION:
 ${conversationHistory}
 
-Generate your next response as the customer disputing the bill. Be natural and conversational.`;
+Generate your next response as the customer disputing the bill. Be natural, conversational, and vary your response style. Don't always end with questions or prompts.`;
 
   try {
     const response = await anthropic.messages.create({
@@ -158,10 +161,11 @@ Generate a natural opening statement (under 50 words) that:
 2. State you're calling about YOUR bill dispute
 3. Provide YOUR account number immediately
 4. Mention the specific charge amount and date you're disputing
-5. Be ready to share ANY bill information when asked - never refuse to provide details
+5. Sound natural and conversational - like a real person calling customer service
+6. Don't end with "please continue" or similar prompts
 
 You are the CUSTOMER calling THEM about YOUR problem. Use YOUR specific bill details above.
-ALWAYS provide bill information when requested - it's YOUR bill and YOUR call.`;
+Be natural and direct - you're frustrated about an incorrect charge on YOUR bill.`;
 
   try {
     const response = await anthropic.messages.create({
