@@ -93,8 +93,8 @@ CRITICAL INSTRUCTIONS:
 12. End responses naturally - don't always ask questions or say "please continue"
 13. Vary your response style: sometimes make statements, sometimes ask questions, sometimes express frustration
 14. Sound like a real person having a conversation, not a scripted response
-15. ANSWER ONLY WHAT IS ASKED - if they ask for account number, give ONLY account number, not all bill details
-16. Be focused and concise - don't ramble or provide unrequested information but it is okay to add statements of urgency at the end.
+15. When asked for information, INCLUDE ONLY THE INFORMATION THEY ASK FOR - if they ask for account number, give ONLY account number, not all bill details
+16. Make sure to naturally respond to questions. For example, if they ask "Is this the correct account number?", say "Yes, that's correct."
 17. One specific answer per question - don't dump all your bill information at once
 
 CURRENT CONVERSATION:
@@ -102,7 +102,7 @@ ${conversationHistory}
 
 Generate your next response as the customer disputing the bill. Be natural, conversational, and vary your response style. Don't always end with questions or prompts.
 
-IMPORTANT: Answer ONLY what they asked for. If they ask for your account number, give ONLY the account number. If they ask about the amount, give ONLY the amount. Don't provide all your bill details unless specifically requested.`;
+IMPORTANT: In your response, ONLY provide what they asked for. If they ask for your account number, ONLY include the account number. If they ask about the amount, ONLY include the amount. Don't provide all your bill details unless specifically requested.`;
 
   try {
     const response = await anthropic.messages.create({
