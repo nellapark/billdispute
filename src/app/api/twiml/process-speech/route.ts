@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const callSid = searchParams.get('callSid');
     const disputeId = searchParams.get('disputeId');
+    const encodedData = searchParams.get('data');
 
     if (!callSid || !disputeId) {
       return new NextResponse('Missing required parameters', { status: 400 });
@@ -46,9 +47,10 @@ export async function POST(request: NextRequest) {
       const transferUrl = createAudioUrl("I'm having trouble hearing you. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
 
       // No speech detected, ask again with fast response times
+      const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
+  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(noSpeechUrl)}</Play>
     <Play>${escapeXmlUrl(continueUrl)}</Play>
   </Gather>
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
     
     // Process the speech input and generate AI response with timing
     const startTime = Date.now();
-    const twimlResponse = await processCallInput(callSid, speechResult, confidence, disputeId);
+    const twimlResponse = await processCallInput(callSid, speechResult, confidence, disputeId, encodedData || undefined);
     const processingTime = Date.now() - startTime;
     
     console.log(`Generated TwiML response in ${processingTime}ms`);

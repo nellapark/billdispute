@@ -41,22 +41,36 @@ export async function POST(request: NextRequest) {
 
     console.log(`TwiML requested for dispute ${disputeId}, call ${callSid}`);
 
-    // Get comprehensive dispute data
-    const disputeData = getDisputeData(disputeId);
+    // Get comprehensive dispute data from URL parameters (serverless-friendly)
+    const encodedData = searchParams.get('data');
+    let disputeData = null;
     
     console.log('=== TwiML Dispute Context Debug ===');
     console.log('Dispute ID:', disputeId);
-    console.log('Dispute data found:', !!disputeData);
-    if (disputeData) {
-      console.log('Dispute data details:', {
-        company: disputeData.company,
-        customerName: disputeData.customerName,
-        amount: disputeData.amount,
-        accountNumber: disputeData.accountNumber,
-        billType: disputeData.billType,
-        chargeDate: disputeData.chargeDate,
-        transactionId: disputeData.transactionId
-      });
+    console.log('Encoded data present:', !!encodedData);
+    
+    if (encodedData) {
+      try {
+        disputeData = JSON.parse(decodeURIComponent(encodedData));
+        console.log('Parsed dispute data:', {
+          company: disputeData.company,
+          customerName: disputeData.customerName,
+          amount: disputeData.amount,
+          accountNumber: disputeData.accountNumber,
+          billType: disputeData.billType,
+          chargeDate: disputeData.chargeDate,
+          transactionId: disputeData.transactionId
+        });
+      } catch (error) {
+        console.error('Failed to parse dispute data from URL:', error);
+      }
+    }
+    
+    // Fallback: try in-memory storage
+    if (!disputeData) {
+      console.log('No URL data, trying in-memory storage...');
+      disputeData = getDisputeData(disputeId);
+      console.log('In-memory data found:', !!disputeData);
     }
     
     if (disputeData) {
@@ -82,7 +96,7 @@ export async function POST(request: NextRequest) {
       console.log('Setting context data:', contextData);
       setDisputeContext(disputeId, contextData);
     } else {
-      console.log('No dispute data found, using fallback context');
+      console.log('No dispute data found anywhere, using fallback context');
       // Fallback context
       setDisputeContext(disputeId, {
         disputeId,
@@ -102,13 +116,14 @@ export async function POST(request: NextRequest) {
     const retryAudioUrl = createAudioUrl("I didn't receive a response. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
 
     // Create TwiML response with fast response times for initial greeting
+    const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
+  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(greetingAudioUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryAudioUrl)}</Play>
-  <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${disputeId}</Redirect>
+  <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${disputeId}${dataParam}</Redirect>
 </Response>`;
 
     return new NextResponse(twiml, {

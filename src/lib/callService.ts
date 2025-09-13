@@ -50,11 +50,36 @@ const activeCalls = new Map<string, CallSession>();
 const disputeStorage = new Map<string, BillDispute>();
 
 export function storeDisputeData(dispute: BillDispute): void {
+  console.log('=== Storing Dispute Data ===');
+  console.log('Dispute ID:', dispute.id);
+  console.log('Dispute data:', {
+    company: dispute.company,
+    customerName: dispute.customerName,
+    amount: dispute.amount,
+    accountNumber: dispute.accountNumber,
+    phoneNumber: dispute.phoneNumber
+  });
   disputeStorage.set(dispute.id, dispute);
+  console.log('Stored successfully. Storage size:', disputeStorage.size);
+  console.log('Storage keys:', Array.from(disputeStorage.keys()));
 }
 
 export function getDisputeData(disputeId: string): BillDispute | undefined {
-  return disputeStorage.get(disputeId);
+  console.log('=== Retrieving Dispute Data ===');
+  console.log('Looking for dispute ID:', disputeId);
+  console.log('Storage size:', disputeStorage.size);
+  console.log('Available keys:', Array.from(disputeStorage.keys()));
+  const data = disputeStorage.get(disputeId);
+  console.log('Found data:', !!data);
+  if (data) {
+    console.log('Retrieved data:', {
+      company: data.company,
+      customerName: data.customerName,
+      amount: data.amount,
+      accountNumber: data.accountNumber
+    });
+  }
+  return data;
 }
 
 export async function initiateDisputeCall(dispute: BillDispute): Promise<string> {
@@ -75,8 +100,25 @@ export async function initiateDisputeCall(dispute: BillDispute): Promise<string>
                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
                    'https://billdispute.vercel.app';
     
-    // Create TwiML for the call
-    const twimlUrl = `${baseUrl}/api/twiml/dispute-call?disputeId=${dispute.id}`;
+    // Create TwiML for the call with encoded dispute data
+    const disputeData = encodeURIComponent(JSON.stringify({
+      company: dispute.company,
+      customerName: dispute.customerName,
+      amount: dispute.amount,
+      accountNumber: dispute.accountNumber,
+      billType: dispute.billType,
+      transactionId: dispute.transactionId,
+      chargeDate: dispute.chargeDate,
+      dueDate: dispute.dueDate,
+      billingPeriod: dispute.billingPeriod,
+      previousBalance: dispute.previousBalance,
+      currentCharges: dispute.currentCharges,
+      totalAmount: dispute.totalAmount,
+      phoneNumber: dispute.phoneNumber,
+      description: dispute.description
+    }));
+    
+    const twimlUrl = `${baseUrl}/api/twiml/dispute-call?disputeId=${dispute.id}&data=${disputeData}`;
 
     console.log(`Using webhook URL: ${twimlUrl}`);
 
@@ -165,7 +207,8 @@ export async function processCallInput(
   callSid: string,
   speechResult: string,
   confidence: number,
-  disputeId?: string
+  disputeId?: string,
+  encodedData?: string
 ): Promise<string> {
   let session = activeCalls.get(callSid);
   if (!session) {
@@ -204,14 +247,15 @@ export async function processCallInput(
     const retryPromptUrl = createAudioUrl("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
 
     // Use ElevenLabs audio with fast response (optimized timeouts)
+    const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
+  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
     <Play>${escapeXmlUrl(continuePromptUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryPromptUrl)}</Play>
-  <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${session.disputeId}</Redirect>
+  <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${session.disputeId}${dataParam}</Redirect>
 </Response>`;
 
     return twiml;
