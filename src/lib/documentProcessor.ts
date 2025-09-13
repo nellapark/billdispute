@@ -133,17 +133,17 @@ function simulateOCRForExampleBill(fileName: string): string {
 ELECTRIC COMPANY                    ELECTRIC BILL
 (407) 404-4156
 
-CUSTOMER NAME                       AMOUNT DUE
-John Smith                          $512.46
+CUSTOMER NAME                       ACCOUNT NUMBER
+John Smith                          5678 9101
 
-SERVICE ADDRESS                     
-1234 MAIN STREET                    
+SERVICE ADDRESS                     AMOUNT DUE
+1234 MAIN STREET                    $512.46
 
 BILLING DATE                        DATE DUE
 April 6, 2024                       April 22, 2024
 
-SUMMARY OF CHARGES                  ACCOUNT NUMBER
-PREVIOUS BALANCE                    5678 9101
+SUMMARY OF CHARGES                  
+PREVIOUS BALANCE                    $489.37
 PAYMENT RECEIVED - THANK YOU        -$489.37
 CURRENT CHARGES                     $512.46
 
@@ -286,9 +286,11 @@ export async function extractBillInfoFromBuffer(buffer: Buffer, mimeType: string
     
     // Extract customer name
     const customerNamePatterns = [
-      /(?:bill\s+to|customer\s+name|account\s+holder)[\s:]*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      /(?:customer\s+name|account\s+holder|bill\s+to)[\s:]*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
       /^([A-Z][a-z]+\s+[A-Z][a-z]+)\s*$/m, // Name on its own line
       /service\s+address[\s\n]*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      // Pattern for "CUSTOMER NAME" followed by name on next line
+      /CUSTOMER\s+NAME[\s\n]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
     ];
     
     let customerName: string | null = null;
@@ -438,6 +440,24 @@ export async function extractBillInfoFromBuffer(buffer: Buffer, mimeType: string
         }
       }
     }
+    
+    // Debug logging
+    console.log('=== Bill Information Extraction Debug ===');
+    console.log('Extracted data:', {
+      phoneNumber,
+      company,
+      amount,
+      accountNumber,
+      customerName,
+      billType,
+      transactionId,
+      chargeDate,
+      dueDate,
+      billingPeriod,
+      previousBalance,
+      currentCharges,
+      totalAmount,
+    });
     
     return {
       phoneNumber,

@@ -45,17 +45,22 @@ export async function generateDisputeResponse(
 
   const context = getDisputeContext(disputeId);
   
-  console.log('AI Response Generation - Dispute Context:', {
-    disputeId,
-    hasContext: !!context,
-    company: context?.company,
-    customerName: context?.customerName,
-    amount: context?.amount,
-    chargeDate: context?.chargeDate,
-    accountNumber: context?.accountNumber
-  });
+  // Debug logging
+  console.log('=== AI Response Generation Debug ===');
+  console.log('Dispute ID:', disputeId);
+  console.log('Context found:', !!context);
+  if (context) {
+    console.log('Context details:', {
+      company: context.company,
+      customerName: context.customerName,
+      amount: context.amount,
+      accountNumber: context.accountNumber,
+      chargeDate: context.chargeDate,
+      billType: context.billType
+    });
+  }
   
-  const systemPrompt = `You are an AI assistant helping to dispute a bill charge over the phone. You are speaking directly to a customer service representative.
+  const systemPrompt = `You are calling customer service on behalf of a customer to dispute a bill charge. You ARE the customer making this call.
 
 DISPUTE CONTEXT:
 ${context ? `
@@ -75,12 +80,13 @@ ${context ? `
 ` : 'Context not available'}
 
 INSTRUCTIONS:
-1. Be polite, professional, and persistent
-2. ALWAYS use specific bill details (customer name, account number, dates, amounts) in your responses
-3. Reference the exact charge date, amount, and account information when relevant
-4. Keep responses concise (under 50 words) but include key details
-5. Don't mention you are an AI - speak as the customer
-6. Be direct and focused on getting the charge resolved
+1. You ARE the customer calling about YOUR bill - speak in first person
+2. ALWAYS use the specific details from the dispute context above
+3. Reference your account number, charge amounts, and dates when relevant
+4. If customer name is provided, identify yourself by that name
+5. Be polite, professional, and persistent
+6. Keep responses concise (under 50 words) but include specific details
+7. Don't mention you are an AI - you are the customer
 
 CURRENT CONVERSATION:
 ${conversationHistory}
@@ -116,17 +122,22 @@ Generate your next response as the customer disputing the bill. Be natural and c
 export async function generateInitialGreeting(disputeId: string): Promise<string> {
   const context = getDisputeContext(disputeId);
   
-  console.log('Initial Greeting Generation - Dispute Context:', {
-    disputeId,
-    hasContext: !!context,
-    company: context?.company,
-    customerName: context?.customerName,
-    amount: context?.amount,
-    chargeDate: context?.chargeDate,
-    accountNumber: context?.accountNumber
-  });
+  // Debug logging
+  console.log('=== Initial Greeting Generation Debug ===');
+  console.log('Dispute ID:', disputeId);
+  console.log('Context found:', !!context);
+  if (context) {
+    console.log('Context details:', {
+      company: context.company,
+      customerName: context.customerName,
+      amount: context.amount,
+      accountNumber: context.accountNumber,
+      chargeDate: context.chargeDate,
+      billType: context.billType
+    });
+  }
   
-  const systemPrompt = `You are calling customer service to dispute a bill charge. Generate a polite, professional opening statement.
+  const systemPrompt = `You are the customer calling customer service to dispute a bill charge. Generate a polite, professional opening statement that introduces yourself and your issue.
 
 DISPUTE CONTEXT:
 ${context ? `
@@ -140,13 +151,12 @@ ${context ? `
 ` : 'General billing dispute'}
 
 Generate a natural opening statement (under 50 words) that:
-1. Greets the representative politely and introduces yourself by name if available
-2. States you're calling about a billing issue with specific account details
-3. Mentions the specific charge amount and date if available
-4. Briefly describes the nature of the dispute
+1. If customer name is available, introduce yourself by name
+2. Reference your specific account number if available
+3. Mention the specific charge amount and date if available
+4. State you're calling to dispute a charge on your bill
 
-ALWAYS include specific details like customer name, account number, charge date, and amount when available.
-Don't mention you are an AI - speak as the customer.`;
+ALWAYS use the specific details from the context above. You ARE the customer calling about YOUR bill.`;
 
   try {
     const response = await anthropic.messages.create({
