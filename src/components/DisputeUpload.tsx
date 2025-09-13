@@ -3,13 +3,13 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle, Loader2 } from 'lucide-react';
-import { DisputeFormData } from '@/types';
+import { DisputeFormData, BillDispute } from '@/types';
 
 interface DisputeUploadProps {
-  onUploadSuccess?: (disputeId: string) => void;
+  onDisputeCreated?: (dispute: BillDispute) => void;
 }
 
-export default function DisputeUpload({ onUploadSuccess }: DisputeUploadProps) {
+export default function DisputeUpload({ onDisputeCreated }: DisputeUploadProps) {
   const [formData, setFormData] = useState<DisputeFormData>({
     file: null,
     description: '',
@@ -71,20 +71,20 @@ export default function DisputeUpload({ onUploadSuccess }: DisputeUploadProps) {
       }
 
       const result = await response.json();
-      setSuccess('Dispute uploaded successfully! Processing will begin shortly.');
       
-      // Reset form
-      setFormData({
-        file: null,
-        description: '',
-        priority: 'medium'
-      });
-
-      // Trigger the dashboard flow
-      if (onUploadSuccess && result.disputeId) {
-        setTimeout(() => {
-          onUploadSuccess(result.disputeId);
-        }, 1000); // Brief delay to show success message
+      if (onDisputeCreated && result.dispute) {
+        // Transition to streaming dashboard
+        onDisputeCreated(result.dispute);
+      } else {
+        // Fallback to success message
+        setSuccess('Dispute uploaded successfully! Processing will begin shortly.');
+        
+        // Reset form
+        setFormData({
+          file: null,
+          description: '',
+          priority: 'medium'
+        });
       }
 
     } catch (err) {

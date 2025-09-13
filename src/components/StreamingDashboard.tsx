@@ -1,286 +1,299 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Phone, PhoneOff, Mic, MicOff, Volume2, FileText, Clock, User, Building2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BillDispute } from '@/types';
+import { Phone, PhoneCall, Clock, User, Building, DollarSign, Calendar, Hash, FileText, Loader2 } from 'lucide-react';
 
 interface StreamingDashboardProps {
-  disputeId?: string;
+  dispute: BillDispute;
+  onBack: () => void;
 }
 
-interface Message {
+interface ConversationMessage {
   id: string;
-  speaker: 'user' | 'ai';
-  text: string;
+  speaker: 'ai' | 'human';
+  message: string;
   timestamp: Date;
 }
 
-export default function StreamingDashboard({ disputeId }: StreamingDashboardProps) {
-  const [isCallActive, setIsCallActive] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const [callDuration, setCallDuration] = useState(0);
-  const [messages, setMessages] = useState<Message[]>([]);
+export default function StreamingDashboard({ dispute, onBack }: StreamingDashboardProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [callStatus, setCallStatus] = useState<'connecting' | 'active' | 'completed'>('connecting');
+  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Dummy bill data
-  const billData = {
-    company: "Charlie's Electric",
-    customerName: "Allen Park",
-    accountNumber: "876543210",
-    amount: 645.22,
-    billType: "Electric",
-    chargeDate: "August 5, 2025"
-  };
-
-  // Dummy conversation responses
-  const dummyResponses = [
-    { speaker: 'ai' as const, text: "Hello, this is Allen Park calling about my electric bill. My account number is 876543210.", delay: 1000 },
-    { speaker: 'user' as const, text: "Hello Mr. Park, I can help you with your account. What seems to be the issue?", delay: 2500 },
-    { speaker: 'ai' as const, text: "There's a $645.22 charge from August 5th that looks incorrect. It's much higher than usual.", delay: 2000 },
-    { speaker: 'user' as const, text: "I see that charge on your account. Let me look into the billing details for that period.", delay: 3000 },
-    { speaker: 'ai' as const, text: "Thank you. My typical monthly bill is around $200, so this seems way off.", delay: 2200 },
-    { speaker: 'user' as const, text: "You're right, I can see there was an error in the meter reading. Let me process a credit for you.", delay: 2800 },
-    { speaker: 'ai' as const, text: "That's great! How long will it take for the credit to appear on my account?", delay: 1800 },
-    { speaker: 'user' as const, text: "The credit will appear within 3-5 business days. Is there anything else I can help you with?", delay: 2500 },
-    { speaker: 'ai' as const, text: "No, that covers everything. Thank you for resolving this so quickly!", delay: 1500 }
+  // Dummy conversation data for streaming animation
+  const dummyConversation = [
+    { speaker: 'ai' as const, message: "Hello, this is Allen Park calling about my electric bill. My account number is 876543210.", delay: 2000 },
+    { speaker: 'human' as const, message: "Hello Mr. Park, I can help you with that. What seems to be the issue with your bill?", delay: 3000 },
+    { speaker: 'ai' as const, message: "I received my August bill and there's a $645.22 charge that seems incorrect for my usual usage.", delay: 4000 },
+    { speaker: 'human' as const, message: "Let me look up your account. I can see the charge from August 5th. Can you tell me more about why you think it's incorrect?", delay: 5000 },
+    { speaker: 'ai' as const, message: "My typical monthly bill is around $200-250. This $645 charge is nearly triple my normal usage, and I was out of town for half of July.", delay: 4500 },
+    { speaker: 'human' as const, message: "I understand your concern. Let me check the meter readings and usage patterns for that billing period.", delay: 3500 },
+    { speaker: 'ai' as const, message: "Thank you. I have my previous bills here if you need to compare the usage history.", delay: 3000 },
+    { speaker: 'human' as const, message: "I can see there was an estimated reading in July that may have caused an adjustment. Let me investigate this further and see what we can do to resolve this.", delay: 5000 },
   ];
 
-  // Simulate streaming conversation
   useEffect(() => {
+    // Initial loading animation
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+      setCallStatus('active');
+    }, 3000);
+
+    return () => clearTimeout(loadingTimer);
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || callStatus !== 'active') return;
+
     let messageIndex = 0;
     let timeoutId: NodeJS.Timeout;
 
     const addNextMessage = () => {
-      if (messageIndex >= dummyResponses.length) {
-        setIsCallActive(false);
+      if (messageIndex >= dummyConversation.length) {
+        setCallStatus('completed');
         return;
       }
 
-      const response = dummyResponses[messageIndex];
-      
-      // Show typing indicator
+      const currentMsg = dummyConversation[messageIndex];
       setIsTyping(true);
+
+      // Simulate typing delay
+      const typingDelay = currentMsg.speaker === 'ai' ? 1000 : 1500;
       
-      timeoutId = setTimeout(() => {
-        setIsTyping(false);
-        
-        const newMessage: Message = {
+      setTimeout(() => {
+        const newMessage: ConversationMessage = {
           id: `msg-${messageIndex}`,
-          speaker: response.speaker,
-          text: response.text,
+          speaker: currentMsg.speaker,
+          message: currentMsg.message,
           timestamp: new Date()
         };
-        
-        setMessages(prev => [...prev, newMessage]);
+
+        setConversation(prev => [...prev, newMessage]);
+        setIsTyping(false);
         messageIndex++;
-        
+
         // Schedule next message
-        timeoutId = setTimeout(addNextMessage, response.delay);
-      }, 800); // Typing delay
+        timeoutId = setTimeout(addNextMessage, currentMsg.delay);
+      }, typingDelay);
     };
 
-    // Start the conversation after a brief delay
-    timeoutId = setTimeout(addNextMessage, 2000);
+    // Start the conversation
+    const initialDelay = setTimeout(addNextMessage, 2000);
 
-    return () => clearTimeout(timeoutId);
-  }, []);
+    return () => {
+      clearTimeout(initialDelay);
+      clearTimeout(timeoutId);
+    };
+  }, [isLoading, callStatus]);
 
-  // Call duration timer
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isCallActive) {
-      interval = setInterval(() => {
-        setCallDuration(prev => prev + 1);
-      }, 1000);
-    }
-
-    return () => clearInterval(interval);
-  }, [isCallActive]);
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleEndCall = () => {
-    setIsCallActive(false);
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <Phone className="w-8 h-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Initializing Dispute Process</h2>
+          <p className="text-gray-600">Processing your bill and preparing to call {dispute.company}...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Building2 className="w-5 h-5 text-gray-600" />
-              <span className="font-semibold text-gray-900">{billData.company}</span>
-            </div>
-            <div className="h-4 w-px bg-gray-300" />
-            <div className="flex items-center space-x-2">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600">{billData.customerName}</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-mono text-gray-600">
-                {formatDuration(callDuration)}
-              </span>
-            </div>
-            <div className={`
-              px-3 py-1 rounded-full text-xs font-medium
-              ${isCallActive 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-gray-100 text-gray-800'
-              }
-            `}>
-              {isCallActive ? 'Call Active' : 'Call Ended'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* Bill Details Sidebar */}
-        <div className="w-80 bg-white border-r border-gray-200 p-6">
-          <div className="flex items-center space-x-2 mb-6">
-            <FileText className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900">Bill Details</h3>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Account Number
-              </label>
-              <p className="mt-1 text-sm font-mono text-gray-900">{billData.accountNumber}</p>
-            </div>
-            
-            <div>
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Disputed Amount
-              </label>
-              <p className="mt-1 text-lg font-semibold text-red-600">
-                ${billData.amount.toFixed(2)}
-              </p>
-            </div>
-            
-            <div>
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Bill Type
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{billData.billType}</p>
-            </div>
-            
-            <div>
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Charge Date
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{billData.chargeDate}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.speaker === 'ai' ? 'justify-end' : 'justify-start'}`}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={onBack}
+                className="text-gray-600 hover:text-gray-900 font-medium"
               >
-                <div className={`
-                  max-w-xs lg:max-w-md px-4 py-2 rounded-lg
-                  ${message.speaker === 'ai'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-900'
-                  }
-                `}>
-                  <p className="text-sm">{message.text}</p>
-                  <p className={`
-                    text-xs mt-1
-                    ${message.speaker === 'ai' ? 'text-blue-100' : 'text-gray-500'}
-                  `}>
-                    {message.timestamp.toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </p>
+                ← Back
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900">Live Dispute Call</h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${
+                callStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
+                callStatus === 'active' ? 'bg-green-500 animate-pulse' :
+                'bg-gray-400'
+              }`}></div>
+              <span className="text-sm font-medium text-gray-700 capitalize">{callStatus}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar - Bill Details */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Bill Details</h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <Building className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Company</p>
+                    <p className="text-sm text-gray-600">{dispute.company}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-            
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-lg px-4 py-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+
+                <div className="flex items-start space-x-3">
+                  <User className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Customer</p>
+                    <p className="text-sm text-gray-600">{dispute.customerName || 'Not provided'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <Hash className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Account Number</p>
+                    <p className="text-sm text-gray-600 font-mono">{dispute.accountNumber || 'Not provided'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <DollarSign className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Disputed Amount</p>
+                    <p className="text-sm text-gray-600 font-semibold">${dispute.amount}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Charge Date</p>
+                    <p className="text-sm text-gray-600">{dispute.chargeDate || 'Not provided'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Bill Type</p>
+                    <p className="text-sm text-gray-600">{dispute.billType || 'Not specified'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Phone Number</p>
+                    <p className="text-sm text-gray-600 font-mono">{dispute.phoneNumber || 'Not provided'}</p>
                   </div>
                 </div>
               </div>
-            )}
-            
-            <div ref={messagesEndRef} />
+
+              <div className="mt-6 pt-4 border-t">
+                <p className="text-sm font-medium text-gray-900 mb-2">Issue Description</p>
+                <p className="text-sm text-gray-600">{dispute.description}</p>
+              </div>
+            </div>
           </div>
 
-          {/* Call Controls */}
-          <div className="border-t border-gray-200 bg-white p-6">
-            <div className="flex items-center justify-center space-x-4">
-              <button
-                onClick={toggleMute}
-                className={`
-                  p-3 rounded-full transition-colors
-                  ${isMuted 
-                    ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }
-                `}
-                disabled={!isCallActive}
-              >
-                {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-              </button>
-              
-              <button
-                onClick={handleEndCall}
-                disabled={!isCallActive}
-                className="p-4 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                <PhoneOff className="w-6 h-6" />
-              </button>
-              
-              <button
-                className="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                disabled={!isCallActive}
-              >
-                <Volume2 className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-500">
-                {isCallActive 
-                  ? 'AI is handling your dispute call automatically' 
-                  : 'Call completed successfully'
-                }
-              </p>
+          {/* Main Content - Streaming Conversation */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-sm border">
+              {/* Call Header */}
+              <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <PhoneCall className="w-8 h-8 text-blue-600" />
+                      {callStatus === 'active' && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                      )}
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Calling {dispute.company}
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        {callStatus === 'connecting' && 'Connecting to customer service...'}
+                        {callStatus === 'active' && 'Live conversation in progress'}
+                        {callStatus === 'completed' && 'Call completed successfully'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <Clock className="w-4 h-4" />
+                    <span>{new Date().toLocaleTimeString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Conversation Area */}
+              <div className="p-6">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {conversation.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.speaker === 'ai' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          msg.speaker === 'ai'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-xs font-medium opacity-75">
+                            {msg.speaker === 'ai' ? 'You (AI)' : 'Customer Service'}
+                          </span>
+                          <span className="text-xs opacity-50">
+                            {msg.timestamp.toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-sm">{msg.message}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Typing Indicator */}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 text-gray-900 max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm text-gray-600">Customer service is typing...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Call Status Footer */}
+                <div className="mt-6 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        callStatus === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                      }`}></div>
+                      <span className="text-sm text-gray-600">
+                        {callStatus === 'connecting' && 'Establishing connection...'}
+                        {callStatus === 'active' && 'Call in progress - AI handling dispute'}
+                        {callStatus === 'completed' && 'Call completed - Processing results'}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Messages: {conversation.length}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
