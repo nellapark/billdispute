@@ -16,6 +16,11 @@ function createAudioUrl(text: string, voiceId?: string): string {
   return `${baseUrl}/api/audio/generate?text=${encodedText}${voiceParam}`;
 }
 
+// Helper function to escape URLs for XML
+function escapeXmlUrl(url: string): string {
+  return url.replace(/&/g, '&amp;');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -56,9 +61,9 @@ export async function POST(request: NextRequest) {
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
-    <Play>${greetingAudioUrl}</Play>
+    <Play>${escapeXmlUrl(greetingAudioUrl)}</Play>
   </Gather>
-  <Play>${retryAudioUrl}</Play>
+  <Play>${escapeXmlUrl(retryAudioUrl)}</Play>
   <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${disputeId}</Redirect>
 </Response>`;
 
@@ -73,7 +78,7 @@ export async function POST(request: NextRequest) {
     const errorAudioUrl = createAudioUrl("I'm sorry, there was an error processing your call. Please try again later.", 'f5HLTX707KIM4SzJYzSz');
     const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Play>${errorAudioUrl}</Play>
+  <Play>${escapeXmlUrl(errorAudioUrl)}</Play>
   <Hangup/>
 </Response>`;
 

@@ -16,6 +16,11 @@ function createAudioUrl(text: string, voiceId?: string): string {
   return `${baseUrl}/api/audio/generate?text=${encodedText}${voiceParam}`;
 }
 
+// Helper function to escape URLs for XML
+function escapeXmlUrl(url: string): string {
+  return url.replace(/&/g, '&amp;');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -43,11 +48,11 @@ export async function POST(request: NextRequest) {
       // No speech detected, ask again with ElevenLabs voice
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Play>${noSpeechUrl}</Play>
+  <Play>${escapeXmlUrl(noSpeechUrl)}</Play>
   <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
-    <Play>${continueUrl}</Play>
+    <Play>${escapeXmlUrl(continueUrl)}</Play>
   </Gather>
-  <Play>${transferUrl}</Play>
+  <Play>${escapeXmlUrl(transferUrl)}</Play>
   <Hangup/>
 </Response>`;
 
@@ -77,7 +82,7 @@ export async function POST(request: NextRequest) {
     const errorAudioUrl = createAudioUrl("I'm sorry, I'm having technical difficulties. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
     const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Play>${errorAudioUrl}</Play>
+  <Play>${escapeXmlUrl(errorAudioUrl)}</Play>
   <Hangup/>
 </Response>`;
 
