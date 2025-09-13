@@ -14,6 +14,21 @@ const elevenLabs = new ElevenLabsClient({
   apiKey: process.env.ELEVENLABS_API_KEY,
 });
 
+// Helper function to get base URL for audio generation
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL || 
+         process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+         'https://billdispute.vercel.app';
+}
+
+// Helper function to create ElevenLabs audio URL
+function createAudioUrl(text: string, voiceId?: string): string {
+  const baseUrl = getBaseUrl();
+  const encodedText = encodeURIComponent(text);
+  const voiceParam = voiceId ? `&voiceId=${encodeURIComponent(voiceId)}` : '';
+  return `${baseUrl}/api/audio/generate?text=${encodedText}${voiceParam}`;
+}
+
 interface CallSession {
   disputeId: string;
   callSid: string;
@@ -128,11 +143,22 @@ export async function generateVoiceResponse(
 export async function processCallInput(
   callSid: string,
   speechResult: string,
-  confidence: number
+  confidence: number,
+  disputeId?: string
 ): Promise<string> {
-  const session = activeCalls.get(callSid);
+  let session = activeCalls.get(callSid);
   if (!session) {
-    throw new Error('Call session not found');
+    console.log(`Call session not found for ${callSid}, creating temporary session`);
+    // Create a temporary session if it doesn't exist
+    session = {
+      disputeId: disputeId || 'temp-dispute',
+      callSid: callSid,
+      transcript: [],
+      isActive: true,
+      startTime: new Date(),
+      phoneNumber: 'unknown',
+    };
+    activeCalls.set(callSid, session);
   }
 
   // Add user input to transcript
@@ -149,32 +175,34 @@ export async function processCallInput(
     session.transcript.push(`AI: ${aiResponse}`);
 
     // Get the base URL for webhooks
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
-                   'https://billdispute.vercel.app';
+    const baseUrl = getBaseUrl();
 
-    // Generate TwiML response with the AI text
-    const twiml = `
-      <Response>
-        <Say voice="alice">${aiResponse}</Say>
-        <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
-          <Say voice="alice">Please continue.</Say>
-        </Gather>
-        <Say voice="alice">I didn't hear anything. Let me try again.</Say>
-        <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${session.disputeId}</Redirect>
-      </Response>
-    `;
+    // Generate ElevenLabs audio URLs
+    const mainResponseUrl = createAudioUrl(aiResponse, 'f5HLTX707KIM4SzJYzSz');
+    const continuePromptUrl = createAudioUrl('Please continue.', 'f5HLTX707KIM4SzJYzSz');
+    const retryPromptUrl = createAudioUrl("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
+
+    // Use ElevenLabs audio with <Play> verb instead of <Say>
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Play>${mainResponseUrl}</Play>
+  <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
+    <Play>${continuePromptUrl}</Play>
+  </Gather>
+  <Play>${retryPromptUrl}</Play>
+  <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${session.disputeId}</Redirect>
+</Response>`;
 
     return twiml;
   } catch (error) {
     console.error('Error processing call input:', error);
     
-    const errorResponse = `
-      <Response>
-        <Say voice="alice">I'm sorry, I'm having technical difficulties. Let me transfer you to a human representative.</Say>
-        <Hangup/>
-      </Response>
-    `;
+    const errorAudioUrl = createAudioUrl("I'm sorry, I'm having technical difficulties. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
+    const errorResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Play>${errorAudioUrl}</Play>
+  <Hangup/>
+</Response>`;
     
     return errorResponse;
   }

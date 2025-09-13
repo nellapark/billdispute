@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processCallInput } from '@/lib/callService';
 
+// Helper function to get base URL for audio generation
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL || 
+         process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+         'https://billdispute.vercel.app';
+}
+
+// Helper function to create ElevenLabs audio URL
+function createAudioUrl(text: string, voiceId?: string): string {
+  const baseUrl = getBaseUrl();
+  const encodedText = encodeURIComponent(text);
+  const voiceParam = voiceId ? `&voiceId=${encodeURIComponent(voiceId)}` : '';
+  return `${baseUrl}/api/audio/generate?text=${encodedText}${voiceParam}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -18,18 +33,21 @@ export async function POST(request: NextRequest) {
 
     if (!speechResult) {
       // Get the base URL for webhooks
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
-                     'https://billdispute.vercel.app';
+      const baseUrl = getBaseUrl();
 
-      // No speech detected, ask again
+      // Generate ElevenLabs audio URLs for no speech scenario
+      const noSpeechUrl = createAudioUrl("I didn't hear anything. Could you please repeat that?", 'f5HLTX707KIM4SzJYzSz');
+      const continueUrl = createAudioUrl('Please continue.', 'f5HLTX707KIM4SzJYzSz');
+      const transferUrl = createAudioUrl("I'm having trouble hearing you. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
+
+      // No speech detected, ask again with ElevenLabs voice
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">I didn't hear anything. Could you please repeat that?</Say>
+  <Play>${noSpeechUrl}</Play>
   <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
-    <Say voice="alice">Please continue.</Say>
+    <Play>${continueUrl}</Play>
   </Gather>
-  <Say voice="alice">I'm having trouble hearing you. Let me transfer you to a human representative.</Say>
+  <Play>${transferUrl}</Play>
   <Hangup/>
 </Response>`;
 
@@ -40,8 +58,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log(`Processing speech for dispute ${disputeId}: "${speechResult}" (confidence: ${confidence})`);
+    
     // Process the speech input and generate AI response
-    const twimlResponse = await processCallInput(callSid, speechResult, confidence);
+    const twimlResponse = await processCallInput(callSid, speechResult, confidence, disputeId);
+    
+    console.log('Generated TwiML response:', twimlResponse);
 
     return new NextResponse(twimlResponse, {
       headers: {
@@ -52,9 +74,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error processing speech:', error);
     
+    const errorAudioUrl = createAudioUrl("I'm sorry, I'm having technical difficulties. Let me transfer you to a human representative.", 'f5HLTX707KIM4SzJYzSz');
     const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">I'm sorry, I'm having technical difficulties. Let me transfer you to a human representative.</Say>
+  <Play>${errorAudioUrl}</Play>
   <Hangup/>
 </Response>`;
 

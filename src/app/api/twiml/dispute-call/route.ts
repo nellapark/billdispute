@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateInitialGreeting, setDisputeContext } from '@/lib/aiService';
 
+// Helper function to get base URL for audio generation
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL || 
+         process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+         'https://billdispute.vercel.app';
+}
+
+// Helper function to create ElevenLabs audio URL
+function createAudioUrl(text: string, voiceId?: string): string {
+  const baseUrl = getBaseUrl();
+  const encodedText = encodeURIComponent(text);
+  const voiceParam = voiceId ? `&voiceId=${encodeURIComponent(voiceId)}` : '';
+  return `${baseUrl}/api/audio/generate?text=${encodedText}${voiceParam}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,20 +43,22 @@ export async function POST(request: NextRequest) {
     });
 
     // Get the base URL for webhooks
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
-                   'https://billdispute.vercel.app';
+    const baseUrl = getBaseUrl();
 
     // Generate initial greeting
     const greeting = await generateInitialGreeting(disputeId);
 
-    // Create TwiML response that goes straight into conversation
+    // Generate ElevenLabs audio URLs
+    const greetingAudioUrl = createAudioUrl(greeting, 'f5HLTX707KIM4SzJYzSz');
+    const retryAudioUrl = createAudioUrl("I didn't receive a response. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
+
+    // Create TwiML response that goes straight into conversation with ElevenLabs voice
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
-    <Say voice="alice">${greeting}</Say>
+    <Play>${greetingAudioUrl}</Play>
   </Gather>
-  <Say voice="alice">I didn't receive a response. Let me try again.</Say>
+  <Play>${retryAudioUrl}</Play>
   <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${disputeId}</Redirect>
 </Response>`;
 
@@ -53,9 +70,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error generating TwiML:', error);
     
+    const errorAudioUrl = createAudioUrl("I'm sorry, there was an error processing your call. Please try again later.", 'f5HLTX707KIM4SzJYzSz');
     const errorTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">I'm sorry, there was an error processing your call. Please try again later.</Say>
+  <Play>${errorAudioUrl}</Play>
   <Hangup/>
 </Response>`;
 
