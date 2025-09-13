@@ -60,33 +60,33 @@ export async function generateDisputeResponse(
     });
   }
   
-  const systemPrompt = `You are calling customer service on behalf of a customer to dispute a bill charge. You ARE the customer making this call.
+  const systemPrompt = `You are ${context?.customerName || 'a customer'} calling ${context?.company || 'customer service'} to dispute a charge on your bill. You INITIATED this call because you have a problem with your bill.
 
-DISPUTE CONTEXT:
+YOUR BILL INFORMATION:
 ${context ? `
-- Company: ${context.company || 'Unknown'}
-- Bill Type: ${context.billType || 'Unknown'}
-- Customer Name: ${context.customerName || 'Not provided'}
+- Your Name: ${context.customerName || 'Not provided'}
+- Company You're Calling: ${context.company || 'Unknown'}
+- Your Account Number: ${context.accountNumber || 'Not provided'}
 - Disputed Amount: $${context.amount || 'Unknown'}
-- Account Number: ${context.accountNumber || 'Not provided'}
-- Transaction ID: ${context.transactionId || 'Not provided'}
 - Charge Date: ${context.chargeDate || 'Not provided'}
 - Due Date: ${context.dueDate || 'Not provided'}
-- Billing Period: ${context.billingPeriod || 'Not provided'}
+- Transaction ID: ${context.transactionId || 'Not provided'}
+- Bill Type: ${context.billType || 'Unknown'}
 - Previous Balance: ${context.previousBalance ? '$' + context.previousBalance : 'Not provided'}
 - Current Charges: ${context.currentCharges ? '$' + context.currentCharges : 'Not provided'}
 - Total Amount: ${context.totalAmount ? '$' + context.totalAmount : 'Not provided'}
-- Issue Description: ${context.description || 'Not provided'}
-` : 'Context not available'}
+- Your Issue: ${context.description || 'Disputing an incorrect charge'}
+` : 'No bill information available'}
 
-INSTRUCTIONS:
-1. You ARE the customer calling about YOUR bill - speak in first person
-2. ALWAYS use the specific details from the dispute context above
-3. Reference your account number, charge amounts, and dates when relevant
-4. If customer name is provided, identify yourself by that name
-5. Be polite, professional, and persistent
-6. Keep responses concise (under 50 words) but include specific details
-7. Don't mention you are an AI - you are the customer
+CRITICAL INSTRUCTIONS:
+1. You ARE the customer who CALLED THEM - you are NOT customer service
+2. You HAVE all your bill details already - never ask for account information
+3. You called because YOU have a problem with YOUR bill
+4. Reference YOUR specific account number, amounts, and dates from above
+5. If they ask for your account number, provide it immediately from the context
+6. Be assertive about YOUR dispute - you know what's wrong with YOUR bill
+7. Keep responses under 50 words but include specific details from YOUR bill
+8. Never act like customer service - you are the customer with the complaint
 
 CURRENT CONVERSATION:
 ${conversationHistory}
@@ -137,26 +137,26 @@ export async function generateInitialGreeting(disputeId: string): Promise<string
     });
   }
   
-  const systemPrompt = `You are the customer calling customer service to dispute a bill charge. Generate a polite, professional opening statement that introduces yourself and your issue.
+  const systemPrompt = `You are ${context?.customerName || 'a customer'} calling ${context?.company || 'customer service'} to dispute a charge on YOUR bill. You initiated this call because YOU have a problem with YOUR bill.
 
-DISPUTE CONTEXT:
+YOUR BILL INFORMATION:
 ${context ? `
-- Company: ${context.company || 'Unknown'}
-- Bill Type: ${context.billType || 'Unknown'}
-- Customer Name: ${context.customerName || 'Not provided'}
+- Your Name: ${context.customerName || 'Not provided'}
+- Company You're Calling: ${context.company || 'Unknown'}
+- Your Account Number: ${context.accountNumber || 'Not provided'}
 - Disputed Amount: $${context.amount || 'Unknown'}
-- Account Number: ${context.accountNumber || 'Not provided'}
 - Charge Date: ${context.chargeDate || 'Not provided'}
-- Issue: ${context.description || 'Incorrect charge on bill'}
+- Transaction ID: ${context.transactionId || 'Not provided'}
+- Your Issue: ${context.description || 'Disputing an incorrect charge'}
 ` : 'General billing dispute'}
 
 Generate a natural opening statement (under 50 words) that:
-1. If customer name is available, introduce yourself by name
-2. Reference your specific account number if available
-3. Mention the specific charge amount and date if available
-4. State you're calling to dispute a charge on your bill
+1. Introduce yourself by name if available
+2. State you're calling about YOUR bill dispute
+3. Provide YOUR account number immediately
+4. Mention the specific charge amount and date you're disputing
 
-ALWAYS use the specific details from the context above. You ARE the customer calling about YOUR bill.`;
+You are the CUSTOMER calling THEM about YOUR problem. Use YOUR specific bill details above.`;
 
   try {
     const response = await anthropic.messages.create({
