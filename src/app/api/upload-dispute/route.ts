@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       title: `Dispute for ${file.name}`,
       company: 'Unknown', // Would be extracted from document
       amount: 0, // Would be extracted from document
-      phoneNumber,
+      phoneNumber: phoneNumber || undefined,
       status: 'pending' as const,
       createdAt: new Date(),
       updatedAt: new Date(),

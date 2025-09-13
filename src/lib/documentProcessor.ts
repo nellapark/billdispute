@@ -1,5 +1,4 @@
 import { readFile } from 'fs/promises';
-import * as pdfParse from 'pdf-parse';
 import { createWorker } from 'tesseract.js';
 
 // Phone number regex patterns
@@ -103,6 +102,7 @@ export async function extractPhoneNumber(filePath: string, mimeType: string): Pr
     if (mimeType === 'application/pdf') {
       // Extract text from PDF
       const buffer = await readFile(filePath);
+      const pdfParse = (await import('pdf-parse')).default;
       const pdfData = await pdfParse(buffer);
       text = pdfData.text;
     } else if (mimeType.startsWith('image/')) {
@@ -143,6 +143,7 @@ export async function extractBillInfo(filePath: string, mimeType: string): Promi
     
     if (mimeType === 'application/pdf') {
       const buffer = await readFile(filePath);
+      const pdfParse = (await import('pdf-parse')).default;
       const pdfData = await pdfParse(buffer);
       text = pdfData.text;
     } else if (mimeType.startsWith('image/')) {

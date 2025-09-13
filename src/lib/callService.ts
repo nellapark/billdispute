@@ -1,5 +1,5 @@
 import twilio from 'twilio';
-import { ElevenLabsApi, ElevenLabsApiConfig } from '@elevenlabs/elevenlabs-js';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { BillDispute, CallRecord } from '@/types';
 import { generateDisputeResponse } from './aiService';
 
@@ -10,10 +10,9 @@ const twilioClient = twilio(
 );
 
 // Initialize ElevenLabs client
-const elevenLabsConfig = new ElevenLabsApiConfig({
+const elevenLabs = new ElevenLabsClient({
   apiKey: process.env.ELEVENLABS_API_KEY,
 });
-const elevenLabs = new ElevenLabsApi(elevenLabsConfig);
 
 interface CallSession {
   disputeId: string;
@@ -93,19 +92,23 @@ export async function generateVoiceResponse(
   }
 
   try {
-    const audioStream = await elevenLabs.generate({
-      voice: voiceId,
+    const audio = await elevenLabs.textToSpeech.convert(voiceId, {
       text,
-      model_id: 'eleven_monolingual_v1',
-      voice_settings: {
+      modelId: 'eleven_multilingual_v2',
+      voiceSettings: {
         stability: 0.5,
-        similarity_boost: 0.5,
+        similarityBoost: 0.5,
       },
     });
 
+    // Convert ReadableStream to Buffer
     const chunks: Buffer[] = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    const reader = audio.getReader();
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(Buffer.from(value));
     }
 
     return Buffer.concat(chunks);
