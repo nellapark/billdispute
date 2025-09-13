@@ -36,19 +36,26 @@ export async function initiateDisputeCall(dispute: BillDispute): Promise<string>
   }
 
   try {
+    // Get the base URL - prioritize production URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                   'https://billdispute.vercel.app';
+    
     // Create TwiML for the call
-    const twimlUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/twiml/dispute-call?disputeId=${dispute.id}`;
+    const twimlUrl = `${baseUrl}/api/twiml/dispute-call?disputeId=${dispute.id}`;
+
+    console.log(`Using webhook URL: ${twimlUrl}`);
 
     // Initiate the call
     const call = await twilioClient.calls.create({
       to: dispute.phoneNumber,
       from: process.env.TWILIO_PHONE_NUMBER!,
       url: twimlUrl,
-      statusCallback: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/webhooks/call-status`,
+      statusCallback: `${baseUrl}/api/webhooks/call-status`,
       statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
       statusCallbackMethod: 'POST',
       record: true,
-      recordingStatusCallback: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/webhooks/recording-status`,
+      recordingStatusCallback: `${baseUrl}/api/webhooks/recording-status`,
     });
 
     // Store call session
