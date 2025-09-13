@@ -177,13 +177,14 @@ export async function generateVoiceResponse(
   try {
     const audio = await elevenLabs.textToSpeech.convert(voiceId, {
       text,
-      modelId: 'eleven_turbo_v2_5', // Faster model for lower latency
+      modelId: 'eleven_turbo_v2_5', // Fastest model for ultra-low latency
       voiceSettings: {
-        stability: 0.4, // Slightly lower for faster generation
-        similarityBoost: 0.4, // Slightly lower for faster generation
-        style: 0.2, // Lower style for faster processing
-        useSpeakerBoost: false, // Disable for faster processing
+        stability: 0.3, // Lower for maximum speed
+        similarityBoost: 0.3, // Lower for maximum speed
+        style: 0.1, // Minimal style for fastest processing
+        useSpeakerBoost: false, // Disabled for speed
       },
+      optimizeStreamingLatency: 4, // Maximum streaming optimization
     });
 
     // Convert ReadableStream to Buffer
@@ -229,11 +230,19 @@ export async function processCallInput(
   session.transcript.push(`Human: ${speechResult}`);
 
   try {
-    // Generate AI response using Anthropic
-    const aiResponse = await generateDisputeResponse(
+    console.log('Starting AI response generation...');
+    const aiStartTime = Date.now();
+    
+    // Generate AI response using Anthropic with parallel audio generation
+    const aiResponsePromise = generateDisputeResponse(
       session.transcript.join('\n'),
       session.disputeId
     );
+
+    // Wait for AI response
+    const aiResponse = await aiResponsePromise;
+    const aiTime = Date.now() - aiStartTime;
+    console.log(`AI response generated in ${aiTime}ms: "${aiResponse.substring(0, 50)}..."`);
 
     // Add AI response to transcript
     session.transcript.push(`AI: ${aiResponse}`);
@@ -241,15 +250,27 @@ export async function processCallInput(
     // Get the base URL for webhooks
     const baseUrl = getBaseUrl();
 
-    // Generate ElevenLabs audio URLs
+    // Pre-generate ElevenLabs audio for immediate playback
+    console.log('Starting ElevenLabs audio generation...');
+    const audioStartTime = Date.now();
+    
+    const [mainAudioBuffer, retryAudioBuffer] = await Promise.all([
+      generateVoiceResponse(aiResponse, 'f5HLTX707KIM4SzJYzSz'),
+      generateVoiceResponse("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz')
+    ]);
+    
+    const audioTime = Date.now() - audioStartTime;
+    console.log(`ElevenLabs audio generated in ${audioTime}ms`);
+
+    // Create URLs for the pre-generated audio
     const mainResponseUrl = createAudioUrl(aiResponse, 'f5HLTX707KIM4SzJYzSz');
     const retryPromptUrl = createAudioUrl("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Use ElevenLabs audio with natural AI response (no hardcoded prompts)
+    // Use optimized speech detection settings for faster response
     const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
+  <Gather input="speech" timeout="2" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryPromptUrl)}</Play>

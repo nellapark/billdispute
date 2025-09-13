@@ -101,9 +101,9 @@ Generate your next response as the customer disputing the bill. Be natural, conv
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022', // Fast model for low latency
-      max_tokens: 150, // Reduced for faster generation
-      temperature: 0.8, // Slightly higher for more natural responses
+      model: 'claude-3-5-haiku-20241022', // Fastest model for ultra-low latency
+      max_tokens: 80, // Reduced further for faster generation
+      temperature: 0.7, // Optimized for speed and naturalness
       system: systemPrompt,
       messages: [
         {
