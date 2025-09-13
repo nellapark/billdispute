@@ -293,5 +293,161 @@ Customer: Thank you.
       }
     ],
     priority: 'medium'
+  },
+  {
+    id: 'dispute-6',
+    title: 'Gym Membership Cancellation Fee',
+    company: 'Planet Fitness',
+    amount: 199.99,
+    phoneNumber: '+1-844-PLANET',
+    status: 'failed',
+    createdAt: new Date('2024-01-10T14:20:00Z'),
+    updatedAt: new Date('2024-01-11T16:45:00Z'),
+    description: 'Charged cancellation fee despite following proper cancellation procedure and having email confirmation.',
+    documentUrl: '/uploads/planet-fitness-cancellation-jan-2024.pdf',
+    calls: [
+      {
+        id: 'call-10',
+        timestamp: new Date('2024-01-11T15:00:00Z'),
+        duration: 420,
+        status: 'completed',
+        transcript: `System: Thank you for calling Planet Fitness. Your call may be recorded for training purposes.
+
+[Hold music for 2 minutes]
+
+Agent: Hi, thank you for calling Planet Fitness. This is Jessica. How can I help you today?
+
+Customer: Hi Jessica, I'm calling about a cancellation fee that was charged to my account. I properly cancelled my membership last month and have email confirmation, but I was still charged a $199.99 cancellation fee.
+
+Agent: I'm sorry to hear about this billing issue. Let me look into your account. Can you please provide me with your membership number or the phone number on your account?
+
+Customer: My phone number is 555-987-6543.
+
+Agent: Thank you. Let me pull up your account... Okay, I can see your membership here. I do see that you cancelled your membership on December 20th, 2023, and I can see the cancellation fee that was charged on January 5th.
+
+Customer: Right, but I followed all the proper procedures. I gave the required 30-day notice and received email confirmation. I shouldn't have been charged this fee.
+
+Agent: I understand your frustration. Let me review your cancellation details... I can see that you did submit a cancellation request on December 20th. However, according to our records, your membership agreement includes an early termination fee clause.
+
+Customer: What do you mean early termination? I've been a member for over two years and I gave proper notice.
+
+Agent: Let me check your membership start date... I see you started your membership on March 15th, 2022. However, you signed up for our 3-year commitment plan, which means your contract doesn't expire until March 2025. Cancelling before then triggers the early termination fee.
+
+Customer: That's not what I was told when I signed up. The sales representative said I could cancel anytime with 30 days notice. I never agreed to a 3-year commitment.
+
+Agent: I understand your concern, but I'm looking at your signed membership agreement here, and it clearly shows you selected the 3-year commitment plan. This plan offers lower monthly rates in exchange for the longer commitment.
+
+Customer: I want to see that agreement because I never signed up for a 3-year plan. Can you email me a copy?
+
+Agent: I'm not able to email membership agreements due to privacy policies, but you can request a copy by visiting your home club or submitting a written request.
+
+Customer: This is ridiculous. I was misled when I signed up. I want this fee removed from my account.
+
+Agent: I understand your frustration, but the cancellation fee is valid according to your membership agreement. The fee is clearly outlined in the terms you agreed to when you signed up.
+
+Customer: I'm telling you I never agreed to those terms. The sales person lied to me about the cancellation policy.
+
+Agent: I'm sorry, but I can only go by what's in our system and your signed agreement. The early termination fee stands as charged. Is there anything else I can help you with today?
+
+Customer: This is unacceptable. I want to speak to a manager.
+
+Agent: I understand you'd like to speak with a manager, but they're going to tell you the same thing. The fee is valid according to your contract.
+
+Customer: Transfer me to a manager right now.
+
+Agent: Hold on, let me see if a manager is available... I'm sorry, but all managers are currently busy with other calls. You can try calling back later or visit your home club to speak with a manager in person.
+
+Customer: This is terrible customer service. I'm disputing this charge with my credit card company.
+
+Agent: That's your right, but the charge is legitimate according to your membership agreement. Is there anything else I can help you with?
+
+Customer: No, this call has been completely unhelpful.
+
+Agent: I'm sorry you feel that way. Thank you for calling Planet Fitness.
+
+[Call ended]`,
+        outcome: 'failed',
+        notes: 'Agent refused to remove cancellation fee, citing 3-year commitment clause. Customer disputes signing such agreement. No resolution achieved.'
+      }
+    ],
+    priority: 'high'
+  },
+  {
+    id: 'dispute-7',
+    title: 'Insurance Premium Increase',
+    company: 'State Farm',
+    amount: 89.50,
+    phoneNumber: '+1-800-STATEFARM',
+    status: 'failed',
+    createdAt: new Date('2024-01-08T09:30:00Z'),
+    updatedAt: new Date('2024-01-09T11:15:00Z'),
+    description: 'Unexpected premium increase without notification or explanation. No claims filed in past 3 years.',
+    documentUrl: '/uploads/statefarm-policy-jan-2024.pdf',
+    calls: [
+      {
+        id: 'call-11',
+        timestamp: new Date('2024-01-09T10:30:00Z'),
+        duration: 360,
+        status: 'completed',
+        transcript: `System: Thank you for calling State Farm. Para español, presiona dos. Your call may be recorded for quality purposes.
+
+[Hold music for 1 minute]
+
+Agent: Good morning, thank you for calling State Farm. This is Robert. How can I assist you today?
+
+Customer: Hi Robert, I'm calling about my auto insurance policy. My premium increased by $89.50 this month without any notification or explanation. I haven't had any claims in over 3 years.
+
+Agent: I'd be happy to help you understand your premium increase. Can you please provide me with your policy number?
+
+Customer: Yes, it's 45-B7-8821-09.
+
+Agent: Thank you. Let me pull up your policy... Okay, I can see your policy here. I do see the premium increase you're referring to. Let me review what caused this adjustment.
+
+Customer: I should have been notified about any rate changes. I've been a State Farm customer for 15 years and this came as a complete surprise.
+
+Agent: I understand your concern. Looking at your policy, I can see several factors that contributed to this increase. First, there was a statewide rate adjustment due to increased claim costs in your area.
+
+Customer: But I haven't filed any claims. Why should I pay more because of other people's claims?
+
+Agent: I understand that seems unfair, but insurance rates are based on risk pools. When claim costs increase in your area, it affects all policyholders in that region. This is standard practice across the insurance industry.
+
+Customer: What other factors caused the increase?
+
+Agent: I also see that your credit score was re-evaluated during your policy renewal, and there was a slight decrease that impacted your rate.
+
+Customer: My credit score barely changed, and I wasn't told that would affect my insurance rates.
+
+Agent: Credit scoring is disclosed in your policy documents as one of the rating factors we use. It's been part of your policy since you started with us.
+
+Customer: I want this increase reversed. I've been a loyal customer with no claims, and this feels like I'm being penalized for no reason.
+
+Agent: I understand your frustration as a long-time customer. However, these rate adjustments are applied systematically based on actuarial data and state regulations. I don't have the authority to reverse rate increases that are properly calculated.
+
+Customer: Can you transfer me to someone who does have that authority?
+
+Agent: I can transfer you to my supervisor, but they're going to explain the same rating factors. The increase is calculated according to our approved rating methodology.
+
+Customer: I don't care, transfer me anyway.
+
+Agent: Hold on, let me see if my supervisor is available... I'm sorry, but my supervisor is currently on another call. You can hold for about 15 minutes, or I can have them call you back.
+
+Customer: This is ridiculous. I'm going to shop around for other insurance companies.
+
+Agent: That's certainly your right as a consumer. If you do decide to cancel your policy, please note that you'll need to provide 30 days written notice.
+
+Customer: I might just do that. This is terrible customer service.
+
+Agent: I'm sorry you feel that way. Is there anything else I can help explain about your policy today?
+
+Customer: No, this has been a waste of time.
+
+Agent: I understand your frustration. Thank you for calling State Farm.
+
+[Call ended]`,
+        outcome: 'failed',
+        notes: 'Agent explained rate increase factors but refused to make any adjustments. Customer considering switching insurance providers.'
+      }
+    ],
+    priority: 'medium'
   }
 ];
