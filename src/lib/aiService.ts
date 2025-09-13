@@ -45,6 +45,16 @@ export async function generateDisputeResponse(
 
   const context = getDisputeContext(disputeId);
   
+  console.log('AI Response Generation - Dispute Context:', {
+    disputeId,
+    hasContext: !!context,
+    company: context?.company,
+    customerName: context?.customerName,
+    amount: context?.amount,
+    chargeDate: context?.chargeDate,
+    accountNumber: context?.accountNumber
+  });
+  
   const systemPrompt = `You are an AI assistant helping to dispute a bill charge over the phone. You are speaking directly to a customer service representative.
 
 DISPUTE CONTEXT:
@@ -66,10 +76,11 @@ ${context ? `
 
 INSTRUCTIONS:
 1. Be polite, professional, and persistent
-2. Clearly state the issue and request resolution
-3. Keep responses concise (under 50 words)
-4. Don't mention you are an AI - speak as the customer
-5. Be direct and focused on getting the charge resolved
+2. ALWAYS use specific bill details (customer name, account number, dates, amounts) in your responses
+3. Reference the exact charge date, amount, and account information when relevant
+4. Keep responses concise (under 50 words) but include key details
+5. Don't mention you are an AI - speak as the customer
+6. Be direct and focused on getting the charge resolved
 
 CURRENT CONVERSATION:
 ${conversationHistory}
@@ -105,6 +116,16 @@ Generate your next response as the customer disputing the bill. Be natural and c
 export async function generateInitialGreeting(disputeId: string): Promise<string> {
   const context = getDisputeContext(disputeId);
   
+  console.log('Initial Greeting Generation - Dispute Context:', {
+    disputeId,
+    hasContext: !!context,
+    company: context?.company,
+    customerName: context?.customerName,
+    amount: context?.amount,
+    chargeDate: context?.chargeDate,
+    accountNumber: context?.accountNumber
+  });
+  
   const systemPrompt = `You are calling customer service to dispute a bill charge. Generate a polite, professional opening statement.
 
 DISPUTE CONTEXT:
@@ -119,10 +140,12 @@ ${context ? `
 ` : 'General billing dispute'}
 
 Generate a natural opening statement (under 50 words) that:
-1. Greets the representative politely
-2. States you're calling about a billing issue
-3. Briefly mentions the nature of the dispute
+1. Greets the representative politely and introduces yourself by name if available
+2. States you're calling about a billing issue with specific account details
+3. Mentions the specific charge amount and date if available
+4. Briefly describes the nature of the dispute
 
+ALWAYS include specific details like customer name, account number, charge date, and amount when available.
 Don't mention you are an AI - speak as the customer.`;
 
   try {

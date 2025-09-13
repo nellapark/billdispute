@@ -133,8 +133,11 @@ function simulateOCRForExampleBill(fileName: string): string {
 ELECTRIC COMPANY                    ELECTRIC BILL
 (407) 404-4156
 
-SERVICE ADDRESS                     AMOUNT DUE
-1234 MAIN STREET                    $512.46
+CUSTOMER NAME                       AMOUNT DUE
+John Smith                          $512.46
+
+SERVICE ADDRESS                     
+1234 MAIN STREET                    
 
 BILLING DATE                        DATE DUE
 April 6, 2024                       April 22, 2024

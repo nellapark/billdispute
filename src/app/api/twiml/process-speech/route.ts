@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { processCallInput } from '@/lib/callService';
+import { processCallInput, getDisputeData } from '@/lib/callService';
+import { setDisputeContext } from '@/lib/aiService';
 
 // Helper function to get base URL for audio generation
 function getBaseUrl(): string {
@@ -64,6 +65,34 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`Processing speech for dispute ${disputeId}: "${speechResult}" (confidence: ${confidence})`);
+    
+    // Ensure dispute context is set for AI response generation
+    const disputeData = getDisputeData(disputeId);
+    if (disputeData) {
+      setDisputeContext(disputeId, {
+        disputeId,
+        company: disputeData.company,
+        amount: disputeData.amount,
+        description: disputeData.description,
+        accountNumber: disputeData.accountNumber,
+        customerName: disputeData.customerName,
+        billType: disputeData.billType,
+        transactionId: disputeData.transactionId,
+        chargeDate: disputeData.chargeDate,
+        dueDate: disputeData.dueDate,
+        billingPeriod: disputeData.billingPeriod,
+        previousBalance: disputeData.previousBalance,
+        currentCharges: disputeData.currentCharges,
+        totalAmount: disputeData.totalAmount,
+        phoneNumber: disputeData.phoneNumber,
+      });
+      console.log('Set comprehensive dispute context for AI:', {
+        company: disputeData.company,
+        customerName: disputeData.customerName,
+        amount: disputeData.amount,
+        chargeDate: disputeData.chargeDate
+      });
+    }
     
     // Process the speech input and generate AI response with timing
     const startTime = Date.now();
