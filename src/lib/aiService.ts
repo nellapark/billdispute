@@ -46,20 +46,10 @@ ${context ? `
 
 INSTRUCTIONS:
 1. Be polite, professional, and persistent
-2. Clearly state the issue and why the charge is incorrect
-3. Ask for specific actions (refund, credit, removal of charge)
-4. Request confirmation numbers and follow-up information
-5. If transferred, briefly re-explain the situation
-6. Keep responses concise and natural (under 100 words)
-7. Don't mention you are an AI - speak as if you are the customer
-
-CONVERSATION FLOW:
-- Start by identifying yourself and stating the purpose of your call
-- Provide account information when requested
-- Explain the disputed charge clearly
-- Provide evidence or reasoning for why the charge is incorrect
-- Request resolution (refund, credit, etc.)
-- Get confirmation and reference numbers
+2. Clearly state the issue and request resolution
+3. Keep responses concise (under 50 words)
+4. Don't mention you are an AI - speak as the customer
+5. Be direct and focused on getting the charge resolved
 
 CURRENT CONVERSATION:
 ${conversationHistory}
@@ -68,9 +58,9 @@ Generate your next response as the customer disputing the bill. Be natural and c
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 300,
-      temperature: 0.7,
+      model: 'claude-3-5-haiku-20241022', // Fast model for low latency
+      max_tokens: 150, // Reduced for faster generation
+      temperature: 0.8, // Slightly higher for more natural responses
       system: systemPrompt,
       messages: [
         {
@@ -113,9 +103,9 @@ Don't mention you are an AI - speak as the customer.`;
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 150,
-      temperature: 0.7,
+      model: 'claude-3-5-haiku-20241022', // Fast model for low latency
+      max_tokens: 100, // Reduced for faster generation
+      temperature: 0.8, // Slightly higher for more natural responses
       system: systemPrompt,
       messages: [
         {

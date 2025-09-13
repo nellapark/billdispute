@@ -121,10 +121,12 @@ export async function generateVoiceResponse(
   try {
     const audio = await elevenLabs.textToSpeech.convert(voiceId, {
       text,
-      modelId: 'eleven_multilingual_v2',
+      modelId: 'eleven_turbo_v2_5', // Faster model for lower latency
       voiceSettings: {
-        stability: 0.5,
-        similarityBoost: 0.5,
+        stability: 0.4, // Slightly lower for faster generation
+        similarityBoost: 0.4, // Slightly lower for faster generation
+        style: 0.2, // Lower style for faster processing
+        useSpeakerBoost: false, // Disable for faster processing
       },
     });
 
@@ -187,10 +189,10 @@ export async function processCallInput(
     const continuePromptUrl = createAudioUrl('Please continue.', 'f5HLTX707KIM4SzJYzSz');
     const retryPromptUrl = createAudioUrl("I didn't hear anything. Let me try again.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Use ElevenLabs audio with interrupt capability (bargein)
+    // Use ElevenLabs audio with fast response (optimized timeouts)
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="10" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
+  <Gather input="speech" timeout="3" speechTimeout="1" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
     <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
     <Play>${escapeXmlUrl(continuePromptUrl)}</Play>
   </Gather>
