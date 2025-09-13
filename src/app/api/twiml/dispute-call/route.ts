@@ -44,9 +44,24 @@ export async function POST(request: NextRequest) {
     // Get comprehensive dispute data
     const disputeData = getDisputeData(disputeId);
     
+    console.log('=== TwiML Dispute Context Debug ===');
+    console.log('Dispute ID:', disputeId);
+    console.log('Dispute data found:', !!disputeData);
+    if (disputeData) {
+      console.log('Dispute data details:', {
+        company: disputeData.company,
+        customerName: disputeData.customerName,
+        amount: disputeData.amount,
+        accountNumber: disputeData.accountNumber,
+        billType: disputeData.billType,
+        chargeDate: disputeData.chargeDate,
+        transactionId: disputeData.transactionId
+      });
+    }
+    
     if (disputeData) {
       // Set comprehensive dispute context for AI
-      setDisputeContext(disputeId, {
+      const contextData = {
         disputeId,
         company: disputeData.company,
         amount: disputeData.amount,
@@ -62,8 +77,12 @@ export async function POST(request: NextRequest) {
         currentCharges: disputeData.currentCharges,
         totalAmount: disputeData.totalAmount,
         phoneNumber: disputeData.phoneNumber,
-      });
+      };
+      
+      console.log('Setting context data:', contextData);
+      setDisputeContext(disputeId, contextData);
     } else {
+      console.log('No dispute data found, using fallback context');
       // Fallback context
       setDisputeContext(disputeId, {
         disputeId,

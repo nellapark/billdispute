@@ -40,7 +40,15 @@ export async function POST(request: NextRequest) {
     
     try {
       billInfo = await extractBillInfoFromBuffer(buffer, file.type, file.name);
+      console.log('=== Upload Route Bill Extraction Debug ===');
+      console.log('File name:', file.name);
+      console.log('File type:', file.type);
       console.log('Extracted bill info:', billInfo);
+      console.log('Company:', billInfo.company);
+      console.log('Customer Name:', billInfo.customerName);
+      console.log('Amount:', billInfo.amount);
+      console.log('Account Number:', billInfo.accountNumber);
+      console.log('Phone Number:', billInfo.phoneNumber);
     } catch (error) {
       console.error('Error extracting bill info:', error);
     }
@@ -52,7 +60,7 @@ export async function POST(request: NextRequest) {
       title: `${billInfo.company || 'Bill'} Dispute - $${billInfo.amount || 'Unknown Amount'}`,
       company: billInfo.company || 'Unknown',
       amount: billInfo.amount || 0,
-      phoneNumber: billInfo.phoneNumber || undefined,
+      phoneNumber: billInfo.phoneNumber,
       status: 'pending' as const,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -72,6 +80,18 @@ export async function POST(request: NextRequest) {
       currentCharges: billInfo.currentCharges,
       totalAmount: billInfo.totalAmount,
     };
+
+    console.log('=== Created Dispute Object Debug ===');
+    console.log('Dispute ID:', disputeId);
+    console.log('Dispute object:', {
+      company: dispute.company,
+      customerName: dispute.customerName,
+      amount: dispute.amount,
+      accountNumber: dispute.accountNumber,
+      billType: dispute.billType,
+      chargeDate: dispute.chargeDate,
+      phoneNumber: dispute.phoneNumber
+    });
 
     // If we have a phone number, initiate the dispute call
     if (billInfo.phoneNumber) {

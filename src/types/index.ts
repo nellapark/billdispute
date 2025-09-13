@@ -13,7 +13,7 @@ export interface BillDispute {
   title: string;
   company: string;
   amount: number;
-  phoneNumber?: string;
+  phoneNumber?: string | null;
   status: 'pending' | 'in-progress' | 'resolved' | 'failed' | 'escalated';
   createdAt: Date;
   updatedAt: Date;
