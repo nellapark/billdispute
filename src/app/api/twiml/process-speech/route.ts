@@ -17,11 +17,16 @@ export async function POST(request: NextRequest) {
     const confidence = parseFloat(formData.get('Confidence') as string || '0');
 
     if (!speechResult) {
+      // Get the base URL for webhooks
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                     'https://billdispute.vercel.app';
+
       // No speech detected, ask again
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="alice">I didn't hear anything. Could you please repeat that?</Say>
-  <Gather input="speech" timeout="10" speechTimeout="auto" action="/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
+  <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
     <Say voice="alice">Please continue.</Say>
   </Gather>
   <Say voice="alice">I'm having trouble hearing you. Let me transfer you to a human representative.</Say>

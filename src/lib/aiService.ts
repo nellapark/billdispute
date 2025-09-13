@@ -68,7 +68,7 @@ Generate your next response as the customer disputing the bill. Be natural and c
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 300,
       temperature: 0.7,
       system: systemPrompt,
@@ -113,7 +113,7 @@ Don't mention you are an AI - speak as the customer.`;
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 150,
       temperature: 0.7,
       system: systemPrompt,
@@ -165,7 +165,7 @@ Respond in JSON format:
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 300,
       temperature: 0.3,
       system: systemPrompt,
@@ -234,7 +234,7 @@ Respond in JSON format:
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 500,
       temperature: 0.7,
       system: systemPrompt,

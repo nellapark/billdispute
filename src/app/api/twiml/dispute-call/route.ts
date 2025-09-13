@@ -10,6 +10,16 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Missing disputeId', { status: 400 });
     }
 
+    // Get CallSid from the request body
+    const formData = await request.formData();
+    const callSid = formData.get('CallSid') as string;
+
+    if (!callSid) {
+      return new NextResponse('Missing CallSid', { status: 400 });
+    }
+
+    console.log(`TwiML requested for dispute ${disputeId}, call ${callSid}`);
+
     // Set dispute context (in a real app, fetch from database)
     setDisputeContext(disputeId, {
       disputeId,
@@ -17,18 +27,22 @@ export async function POST(request: NextRequest) {
       description: 'Billing dispute',
     });
 
+    // Get the base URL for webhooks
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                   'https://billdispute.vercel.app';
+
     // Generate initial greeting
     const greeting = await generateInitialGreeting(disputeId);
 
-    // Create TwiML response
+    // Create TwiML response that goes straight into conversation
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">${greeting}</Say>
-  <Gather input="speech" timeout="10" speechTimeout="auto" action="/api/twiml/process-speech?callSid={CallSid}&amp;disputeId=${disputeId}" method="POST">
-    <Say voice="alice">Please hold while I connect you to a representative.</Say>
+  <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}" method="POST">
+    <Say voice="alice">${greeting}</Say>
   </Gather>
   <Say voice="alice">I didn't receive a response. Let me try again.</Say>
-  <Redirect>/api/twiml/dispute-call?disputeId=${disputeId}</Redirect>
+  <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${disputeId}</Redirect>
 </Response>`;
 
     return new NextResponse(twiml, {

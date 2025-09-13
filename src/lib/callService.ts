@@ -92,7 +92,7 @@ export async function handleIncomingCall(callSid: string, from: string, to: stri
 
 export async function generateVoiceResponse(
   text: string,
-  voiceId: string = 'EXAVITQu4vr4xnSDxMaL' // Default Bella voice
+  voiceId: string = 'f5HLTX707KIM4SzJYzSz' // Brad voice - https://elevenlabs.io/app/voice-library?voiceId=f5HLTX707KIM4SzJYzSz
 ): Promise<Buffer> {
   if (!process.env.ELEVENLABS_API_KEY) {
     throw new Error('ElevenLabs API key not configured');
@@ -148,15 +148,20 @@ export async function processCallInput(
     // Add AI response to transcript
     session.transcript.push(`AI: ${aiResponse}`);
 
+    // Get the base URL for webhooks
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                   'https://billdispute.vercel.app';
+
     // Generate TwiML response with the AI text
     const twiml = `
       <Response>
         <Say voice="alice">${aiResponse}</Say>
-        <Gather input="speech" timeout="10" speechTimeout="auto" action="/api/twiml/process-speech?callSid=${callSid}" method="POST">
+        <Gather input="speech" timeout="10" speechTimeout="auto" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}" method="POST">
           <Say voice="alice">Please continue.</Say>
         </Gather>
         <Say voice="alice">I didn't hear anything. Let me try again.</Say>
-        <Redirect>/api/twiml/dispute-call?disputeId=${session.disputeId}</Redirect>
+        <Redirect>${baseUrl}/api/twiml/dispute-call?disputeId=${session.disputeId}</Redirect>
       </Response>
     `;
 
