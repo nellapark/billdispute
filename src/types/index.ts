@@ -21,6 +21,17 @@ export interface BillDispute {
   documentUrl?: string;
   calls: CallRecord[];
   priority: 'low' | 'medium' | 'high';
+  // Enhanced bill information
+  customerName?: string | null;
+  billType?: string | null; // e.g., "Electric", "Internet", "Phone", "Credit Card"
+  accountNumber?: string | null;
+  transactionId?: string | null;
+  chargeDate?: string | null;
+  dueDate?: string | null;
+  billingPeriod?: string | null;
+  previousBalance?: number | null;
+  currentCharges?: number | null;
+  totalAmount?: number | null;
 }
 
 export interface UploadedFile {

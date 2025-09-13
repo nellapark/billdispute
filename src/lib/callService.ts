@@ -46,6 +46,17 @@ interface CallSession {
 // In-memory storage for active call sessions (in production, use Redis or database)
 const activeCalls = new Map<string, CallSession>();
 
+// In-memory storage for dispute data (in production, use database)
+const disputeStorage = new Map<string, BillDispute>();
+
+export function storeDisputeData(dispute: BillDispute): void {
+  disputeStorage.set(dispute.id, dispute);
+}
+
+export function getDisputeData(disputeId: string): BillDispute | undefined {
+  return disputeStorage.get(disputeId);
+}
+
 export async function initiateDisputeCall(dispute: BillDispute): Promise<string> {
   if (!dispute.phoneNumber) {
     throw new Error('No phone number available for dispute');
@@ -54,6 +65,9 @@ export async function initiateDisputeCall(dispute: BillDispute): Promise<string>
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
     throw new Error('Twilio credentials not configured');
   }
+
+  // Store dispute data for retrieval in TwiML routes
+  storeDisputeData(dispute);
 
   try {
     // Get the base URL - prioritize production URL

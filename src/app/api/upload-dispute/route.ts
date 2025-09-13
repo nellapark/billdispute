@@ -27,6 +27,15 @@ export async function POST(request: NextRequest) {
       company: null as string | null,
       amount: null as number | null,
       accountNumber: null as string | null,
+      customerName: null as string | null,
+      billType: null as string | null,
+      transactionId: null as string | null,
+      chargeDate: null as string | null,
+      dueDate: null as string | null,
+      billingPeriod: null as string | null,
+      previousBalance: null as number | null,
+      currentCharges: null as number | null,
+      totalAmount: null as number | null,
     };
     
     try {
@@ -50,7 +59,18 @@ export async function POST(request: NextRequest) {
       description,
       documentUrl: `data:${file.type};base64,${buffer.toString('base64').substring(0, 100)}...`, // Truncated for storage
       calls: [],
-      priority: priority as 'low' | 'medium' | 'high'
+      priority: priority as 'low' | 'medium' | 'high',
+      // Enhanced bill information
+      customerName: billInfo.customerName,
+      billType: billInfo.billType,
+      accountNumber: billInfo.accountNumber,
+      transactionId: billInfo.transactionId,
+      chargeDate: billInfo.chargeDate,
+      dueDate: billInfo.dueDate,
+      billingPeriod: billInfo.billingPeriod,
+      previousBalance: billInfo.previousBalance,
+      currentCharges: billInfo.currentCharges,
+      totalAmount: billInfo.totalAmount,
     };
 
     // If we have a phone number, initiate the dispute call

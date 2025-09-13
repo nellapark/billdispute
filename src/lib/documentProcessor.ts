@@ -166,6 +166,15 @@ export async function extractBillInfoFromBuffer(buffer: Buffer, mimeType: string
   company: string | null;
   amount: number | null;
   accountNumber: string | null;
+  customerName: string | null;
+  billType: string | null;
+  transactionId: string | null;
+  chargeDate: string | null;
+  dueDate: string | null;
+  billingPeriod: string | null;
+  previousBalance: number | null;
+  currentCharges: number | null;
+  totalAmount: number | null;
 }> {
   try {
     let text = '';
@@ -272,11 +281,175 @@ export async function extractBillInfoFromBuffer(buffer: Buffer, mimeType: string
       }
     }
     
+    // Extract customer name
+    const customerNamePatterns = [
+      /(?:bill\s+to|customer\s+name|account\s+holder)[\s:]*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      /^([A-Z][a-z]+\s+[A-Z][a-z]+)\s*$/m, // Name on its own line
+      /service\s+address[\s\n]*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+    ];
+    
+    let customerName: string | null = null;
+    for (const pattern of customerNamePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const candidate = match[1].trim();
+        // Filter out common false positives
+        if (!candidate.match(/^(electric|company|service|account|customer|billing|statement|invoice)$/i)) {
+          customerName = candidate;
+          break;
+        }
+      }
+    }
+    
+    // Extract bill type
+    const billTypePatterns = [
+      /^(ELECTRIC|GAS|WATER|INTERNET|PHONE|CABLE|CREDIT\s+CARD|UTILITY)\s+(?:BILL|STATEMENT|INVOICE)/im,
+      /(Electric|Gas|Water|Internet|Phone|Cable|Credit Card|Utility)\s+(?:Service|Bill|Statement)/i,
+    ];
+    
+    let billType: string | null = null;
+    for (const pattern of billTypePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        billType = match[1].trim();
+        break;
+      }
+    }
+    
+    // Extract transaction/reference ID
+    const transactionIdPatterns = [
+      /(?:transaction|reference|confirmation)\s+(?:id|number)[\s:]*([A-Z0-9-]+)/i,
+      /ref\s*#[\s:]*([A-Z0-9-]+)/i,
+      /invoice\s+(?:number|#)[\s:]*([A-Z0-9-]+)/i,
+    ];
+    
+    let transactionId: string | null = null;
+    for (const pattern of transactionIdPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        transactionId = match[1].trim();
+        break;
+      }
+    }
+    
+    // Extract charge date
+    const chargeDatePatterns = [
+      /(?:billing|charge|service)\s+date[\s:]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+      /date\s+of\s+service[\s:]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+      /statement\s+date[\s:]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+    ];
+    
+    let chargeDate: string | null = null;
+    for (const pattern of chargeDatePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        chargeDate = match[1].trim();
+        break;
+      }
+    }
+    
+    // Extract due date
+    const dueDatePatterns = [
+      /(?:due|payment)\s+date[\s:]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+      /pay\s+by[\s:]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+      /date\s+due[\s:]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+    ];
+    
+    let dueDate: string | null = null;
+    for (const pattern of dueDatePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        dueDate = match[1].trim();
+        break;
+      }
+    }
+    
+    // Extract billing period
+    const billingPeriodPatterns = [
+      /billing\s+period[\s:]*([A-Za-z]+\s+\d{1,2}\s*-\s*[A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+      /service\s+period[\s:]*([A-Za-z]+\s+\d{1,2}\s*-\s*[A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+    ];
+    
+    let billingPeriod: string | null = null;
+    for (const pattern of billingPeriodPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        billingPeriod = match[1].trim();
+        break;
+      }
+    }
+    
+    // Extract previous balance
+    const previousBalancePatterns = [
+      /previous\s+balance[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+      /balance\s+forward[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+      /opening\s+balance[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+    ];
+    
+    let previousBalance: number | null = null;
+    for (const pattern of previousBalancePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1].replace(/,/g, ''));
+        if (!isNaN(value)) {
+          previousBalance = value;
+          break;
+        }
+      }
+    }
+    
+    // Extract current charges
+    const currentChargesPatterns = [
+      /current\s+charges[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+      /new\s+charges[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+      /this\s+month['s]*\s+charges[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+    ];
+    
+    let currentCharges: number | null = null;
+    for (const pattern of currentChargesPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1].replace(/,/g, ''));
+        if (!isNaN(value)) {
+          currentCharges = value;
+          break;
+        }
+      }
+    }
+    
+    // Extract total amount (different from amount due)
+    const totalAmountPatterns = [
+      /total\s+amount[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+      /grand\s+total[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+      /total\s+bill[\s:$]*(\d+[,.]?\d*\.?\d*)/i,
+    ];
+    
+    let totalAmount: number | null = null;
+    for (const pattern of totalAmountPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1].replace(/,/g, ''));
+        if (!isNaN(value)) {
+          totalAmount = value;
+          break;
+        }
+      }
+    }
+    
     return {
       phoneNumber,
       company,
       amount,
       accountNumber,
+      customerName,
+      billType,
+      transactionId,
+      chargeDate,
+      dueDate,
+      billingPeriod,
+      previousBalance,
+      currentCharges,
+      totalAmount,
     };
     
   } catch (error) {
@@ -286,6 +459,15 @@ export async function extractBillInfoFromBuffer(buffer: Buffer, mimeType: string
       company: null,
       amount: null,
       accountNumber: null,
+      customerName: null,
+      billType: null,
+      transactionId: null,
+      chargeDate: null,
+      dueDate: null,
+      billingPeriod: null,
+      previousBalance: null,
+      currentCharges: null,
+      totalAmount: null,
     };
   }
 }

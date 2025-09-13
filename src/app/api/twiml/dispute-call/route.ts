@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateInitialGreeting, setDisputeContext } from '@/lib/aiService';
+import { getDisputeData } from '@/lib/callService';
 
 // Helper function to get base URL for audio generation
 function getBaseUrl(): string {
@@ -40,12 +41,36 @@ export async function POST(request: NextRequest) {
 
     console.log(`TwiML requested for dispute ${disputeId}, call ${callSid}`);
 
-    // Set dispute context (in a real app, fetch from database)
-    setDisputeContext(disputeId, {
-      disputeId,
-      company: 'Customer Service',
-      description: 'Billing dispute',
-    });
+    // Get comprehensive dispute data
+    const disputeData = getDisputeData(disputeId);
+    
+    if (disputeData) {
+      // Set comprehensive dispute context for AI
+      setDisputeContext(disputeId, {
+        disputeId,
+        company: disputeData.company,
+        amount: disputeData.amount,
+        description: disputeData.description,
+        accountNumber: disputeData.accountNumber,
+        customerName: disputeData.customerName,
+        billType: disputeData.billType,
+        transactionId: disputeData.transactionId,
+        chargeDate: disputeData.chargeDate,
+        dueDate: disputeData.dueDate,
+        billingPeriod: disputeData.billingPeriod,
+        previousBalance: disputeData.previousBalance,
+        currentCharges: disputeData.currentCharges,
+        totalAmount: disputeData.totalAmount,
+        phoneNumber: disputeData.phoneNumber,
+      });
+    } else {
+      // Fallback context
+      setDisputeContext(disputeId, {
+        disputeId,
+        company: 'Customer Service',
+        description: 'Billing dispute',
+      });
+    }
 
     // Get the base URL for webhooks
     const baseUrl = getBaseUrl();

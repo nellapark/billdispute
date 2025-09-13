@@ -7,10 +7,21 @@ const anthropic = new Anthropic({
 
 interface DisputeContext {
   disputeId: string;
-  company?: string;
-  amount?: number;
-  description?: string;
-  accountNumber?: string;
+  company?: string | null;
+  amount?: number | null;
+  description?: string | null;
+  accountNumber?: string | null;
+  // Enhanced bill information
+  customerName?: string | null;
+  billType?: string | null;
+  transactionId?: string | null;
+  chargeDate?: string | null;
+  dueDate?: string | null;
+  billingPeriod?: string | null;
+  previousBalance?: number | null;
+  currentCharges?: number | null;
+  totalAmount?: number | null;
+  phoneNumber?: string | null;
 }
 
 // In-memory storage for dispute contexts (in production, use database)
@@ -39,8 +50,17 @@ export async function generateDisputeResponse(
 DISPUTE CONTEXT:
 ${context ? `
 - Company: ${context.company || 'Unknown'}
+- Bill Type: ${context.billType || 'Unknown'}
+- Customer Name: ${context.customerName || 'Not provided'}
 - Disputed Amount: $${context.amount || 'Unknown'}
 - Account Number: ${context.accountNumber || 'Not provided'}
+- Transaction ID: ${context.transactionId || 'Not provided'}
+- Charge Date: ${context.chargeDate || 'Not provided'}
+- Due Date: ${context.dueDate || 'Not provided'}
+- Billing Period: ${context.billingPeriod || 'Not provided'}
+- Previous Balance: ${context.previousBalance ? '$' + context.previousBalance : 'Not provided'}
+- Current Charges: ${context.currentCharges ? '$' + context.currentCharges : 'Not provided'}
+- Total Amount: ${context.totalAmount ? '$' + context.totalAmount : 'Not provided'}
 - Issue Description: ${context.description || 'Not provided'}
 ` : 'Context not available'}
 
@@ -90,7 +110,11 @@ export async function generateInitialGreeting(disputeId: string): Promise<string
 DISPUTE CONTEXT:
 ${context ? `
 - Company: ${context.company || 'Unknown'}
+- Bill Type: ${context.billType || 'Unknown'}
+- Customer Name: ${context.customerName || 'Not provided'}
 - Disputed Amount: $${context.amount || 'Unknown'}
+- Account Number: ${context.accountNumber || 'Not provided'}
+- Charge Date: ${context.chargeDate || 'Not provided'}
 - Issue: ${context.description || 'Incorrect charge on bill'}
 ` : 'General billing dispute'}
 
