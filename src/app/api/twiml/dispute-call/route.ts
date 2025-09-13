@@ -115,11 +115,11 @@ export async function POST(request: NextRequest) {
     const greetingAudioUrl = createAudioUrl(greeting, 'f5HLTX707KIM4SzJYzSz');
     const retryAudioUrl = createAudioUrl("I didn't receive a response.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Create TwiML response with reasonable timeout for user thinking time
+    // Optimized: Long timeout for initial thinking, ultra-short speechTimeout for immediate detection
     const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="6" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
+  <Gather input="speech" timeout="6" speechTimeout="0.5" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(greetingAudioUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryAudioUrl)}</Play>

@@ -266,11 +266,11 @@ export async function processCallInput(
     const mainResponseUrl = createAudioUrl(aiResponse, 'f5HLTX707KIM4SzJYzSz');
     const retryPromptUrl = createAudioUrl("I didn't hear anything.", 'f5HLTX707KIM4SzJYzSz');
 
-    // Use balanced settings: fast speech detection but reasonable timeout for thinking
+    // Optimized: Long timeout for thinking, ultra-short speechTimeout for immediate detection
     const dataParam = encodedData ? `&amp;data=${encodeURIComponent(encodedData)}` : '';
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" timeout="5" speechTimeout="auto" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
+  <Gather input="speech" timeout="5" speechTimeout="0.5" bargein="true" action="${baseUrl}/api/twiml/process-speech?callSid=${callSid}&amp;disputeId=${session.disputeId}${dataParam}" method="POST">
     <Play>${escapeXmlUrl(mainResponseUrl)}</Play>
   </Gather>
   <Play>${escapeXmlUrl(retryPromptUrl)}</Play>
